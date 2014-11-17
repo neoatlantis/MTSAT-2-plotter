@@ -154,29 +154,38 @@ latNW = 59.98
 latDelta = +0.04
 lngDelta = +0.04
 coeff = math.pi / 180.0
+w = 2000 # draw picture width of w
+h = 3000 # draw picture height of h
+
+r = h / 2 / math.tan(latNW * coeff)
+def toPlotXY(lat, lng):
+    global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, coeff
+    rLatTan = r * math.tan(lat * coeff)
+    if lng < 0:
+        lng += 360
+    lngDiff = lng - lngNW
+    drawX = r * (lngDiff * coeff)
+    drawY = h / 2 - rLatTan 
+    return drawX, drawY
        
 ##############################################################################
 # Prepare for image drawing
 
 from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 
-w = 2000
-h = 3000
 img = Image.new('L', (w, h), 'white')
 draw = ImageDraw.Draw(img)
 
-r = h / 2 / math.tan(latNW * coeff)
 drawW_2  = r * (latDelta / 2.0 * coeff)
 def plot(x, y, value):
     global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, coeff
-    lat = (latNW - y * latDelta) * coeff
-    rLatTan = r * math.tan(lat)
-    drawX = r * (x * lngDelta * coeff)
-    drawY = h / 2 - rLatTan 
-    drawH_p = r * math.tan(lat + latDelta * coeff) - rLatTan 
-    drawH_n = rLatTan - r * math.tan(lat - latDelta * coeff)
+    lat = latNW - y * latDelta
+    lng = lngNW + x * lngDelta
+    drawX1, drawY1 = toPlotXY(lat + latDelta / 2.0, lng - latDelta / 2.0)
+    drawX2, drawY2 = toPlotXY(lat - latDelta / 2.0, lng + lngDelta / 2.0)
+
     color = (value - 100) / (340 - 100) * 255.0
-    draw.rectangle([(drawX - drawW_2, drawY - drawH_p), (drawX + drawW_2, drawY + drawH_n)], fill=color)
+    draw.rectangle([(drawX1, drawY1), (drawX2, drawY2)], fill=color)
 
 ##############################################################################
 # draw image
@@ -218,15 +227,46 @@ imgColor = Image.merge('RGB', (img, img, img))
 drawColor = ImageDraw.Draw(imgColor)
 
 def pointColor(latDeg, lngDeg, rgb, bold=2):
-    global drawColor, r, w, h, latDelta, lngDelta, lngNW, latNW, coeff
-    lat = latDeg * coeff
-    if lngDeg < 0:
-        lngDeg += 360
-    lngDiff = lngDeg - lngNW
-    drawX = r * (lngDiff * coeff)
-    drawY = h / 2 - r * math.tan(lat)
+    drawX, drawY = toPlotXY(latDeg, lngDeg)
     drawColor.rectangle([(drawX - bold / 2.0, drawY - bold / 2.0), (drawX + bold / 2.0, drawY + bold / 2.0)], fill="rgb(%d,%d,%d)" % rgb)
     return drawX, drawY
+
+def lineColor(lat1, lng1, lat2, lng2, rgb, bold):
+    drawX1, drawY1 = toPlotXY(lat1, lng1)
+    drawX2, drawY2 = toPlotXY(lat2, lng2)
+    drawColor.line([(drawX1, drawY1), (drawX2, drawY2)], fill="rgb(%d,%d,%d)" % rgb, width=bold)
+
+# draw coastline
+
+import shapefile
+coastline = shapefile.Reader('coastline/ne_10m_coastline')
+for each in coastline.shapes():
+    points = each.points
+    useLine = False
+    for lng, lat in points:
+        if latNW < abs(lat):
+            continue
+        if lng >= 0:
+            if lng < lngNW:
+                continue
+        else:
+            if lng + 360 > lngNW + 180:
+                continue
+        useLine = True
+    if useLine:
+        start = False
+        lastLng, lastLat = 0, 0
+        curLng, curLat = 0, 0
+        for lng, lat in points:
+            curLng, curLat = lng, lat
+            if start:
+                lineColor(lastLat, lastLng, curLat, curLng, (255, 0, 255), 2)
+            else:
+                start = True
+            lastLng, lastLat = curLng, curLat
+
+
+# draw grid lines
 
 font = ImageFont.truetype('font.ttf', 32)
 fontW, fontH = font.getsize('X')
@@ -247,5 +287,7 @@ for lng in xrange(60, 300, 15):
     else:
         strlng = str(lng)
     drawColor.text((lastX - fontW * 3, fontH * 1.6), strlng, font=font, fill="red")
+
+##############################################################################
 
 imgColor.save('output.png')

@@ -130,7 +130,7 @@ convert = """
 1023:=129.99
 65535:=129.99
 """
-source = open('IMG_DK01IR1_201411171530.geoss', 'r').read()
+source = open('testdata/201411171530.ir/IMG_DK01IR1_201411171530.geoss', 'r').read()
 
 
 ##############################################################################
@@ -158,7 +158,7 @@ coeff = math.pi / 180.0
 ##############################################################################
 # Prepare for image drawing
 
-from PIL import Image, ImageDraw, ImageEnhance, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 
 w = 2000
 h = 3000
@@ -226,14 +226,26 @@ def pointColor(latDeg, lngDeg, rgb, bold=2):
     drawX = r * (lngDiff * coeff)
     drawY = h / 2 - r * math.tan(lat)
     drawColor.rectangle([(drawX - bold / 2.0, drawY - bold / 2.0), (drawX + bold / 2.0, drawY + bold / 2.0)], fill="rgb(%d,%d,%d)" % rgb)
+    return drawX, drawY
 
+font = ImageFont.truetype('font.ttf', 32)
+fontW, fontH = font.getsize('X')
+
+lastX, lastY = 0, 0
 for lat in xrange(-60, 61, 15):
     for lng in xrange(int(lngNW), int(lngNW) + 130):
         for x in xrange(0, 10):
-            pointColor(lat, lng + x / 10.0, (255,0,0))
-for lng in xrange(50, 300, 15):
+            lastX, lastY = pointColor(lat, lng + x / 10.0, (255,0,0))
+    drawColor.text((lastX - fontW * 3, lastY - fontH * 1.6), str(lat), font=font, fill="red")
+
+for lng in xrange(60, 300, 15):
     for lat in xrange(-70, 70):
         for y in xrange(0, 10):
-            pointColor(lat + y / 10.0, lng , (255,0,0))
+            lastX, lastY = pointColor(lat + y / 10.0, lng , (255,0,0))
+    if lng > 180:
+        strlng = str(lng - 360)
+    else:
+        strlng = str(lng)
+    drawColor.text((lastX - fontW * 3, fontH * 1.6), strlng, font=font, fill="red")
 
 imgColor.save('output.png')

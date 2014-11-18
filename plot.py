@@ -23,9 +23,21 @@ import math
 drawData = True
 drawCoastline = True
 
+projectionMethod = 'equirectangular'
+
 markRegion = [
     {"region": [(25.8 - 17.966, 110.0 - 20), (25.8 + 17.966, 110.0 + 20)], "center": True},
 ]
+
+# set the actual drawn region. may not be the whole image, in order to save
+# time
+cropLatN = 45 
+cropLatS = 5 
+cropLngDiffW = 90
+cropLngDiffE = 130
+
+matrixW = 3000
+matrixH = 3000
 
 convert = """
 0:=330.06
@@ -182,26 +194,42 @@ def toTbb(x):
         + left[1]
 
 ##############################################################################
+# Plotting and other parameters
 
 lngNW = 85.02
 latNW = 59.98
 latDelta = +0.04
 lngDelta = +0.04
-lngWidth = lngDelta * 3000
+lngWidth = lngDelta * matrixW
 coeff = math.pi / 180.0
 h = 3000 # draw picture height of h
-r = h / 2 / math.tan(latNW * coeff)
-w = int(r * coeff * lngWidth) + 1
 
-def toPlotXY(lat, lng):
-    global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, coeff
-    rLatTan = r * math.tan(lat * coeff)
-    if lng < 0:
-        lng += 360
-    lngDiff = lng - lngNW
-    drawX = r * (lngDiff * coeff)  + 0
-    drawY = h / 2 - rLatTan        + 0
-    return drawX, drawY
+if 'equirectangular' == projectionMethod:
+    # Equirectangular projection
+    r = h / 2
+    w = int(r * coeff * lngWidth) + 1
+    def toPlotXY(lat, lng):
+        global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, coeff
+        if lng < 0:
+            lng += 360
+        lngDiff = lng - lngNW
+        drawX = r * (lngDiff * coeff)
+        drawY = h / 2 - r * lat / latNW
+        return drawX, drawY
+    
+elif 'mercator' == projectionMethod:
+    # Mercator Projection
+    r = h / 2 / math.tan(latNW * coeff)
+    w = int(r * coeff * lngWidth) + 1
+    def toPlotXY(lat, lng):
+        global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, coeff
+        rLatTan = r * math.tan(lat * coeff)
+        if lng < 0:
+            lng += 360
+        lngDiff = lng - lngNW
+        drawX = r * (lngDiff * coeff)  + 0
+        drawY = h / 2 - rLatTan        + 0
+        return drawX, drawY
        
 ##############################################################################
 # Prepare for image drawing
@@ -209,18 +237,20 @@ def toPlotXY(lat, lng):
 from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 
 #img = Image.new('L', (w, h), 'white')
-imgbuffer = [255,] * (w + 1) * (h + 1)
+imgbuffer = [0,] * (w + 1) * (h + 1)
 #draw = ImageDraw.Draw(img)
 
 drawW_2  = r * (latDelta / 2.0 * coeff)
-def plot(x, y, value):
+def plot(lat, lng, value):
     global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, coeff, imgbuffer
-    lat = latNW - y * latDelta
-    lng = lngNW + x * lngDelta
     drawX1, drawY1 = toPlotXY(lat + latDelta / 2.0, lng - latDelta / 2.0)
     drawX2, drawY2 = toPlotXY(lat - latDelta / 2.0, lng + lngDelta / 2.0)
 
-    color = int((value - 100) / (340 - 100) * 255.0)
+    color = 255 - int((value - 200) / (300 - 200) * 255.0)
+    if color > 255:
+        color = 255
+    if color < 0:
+        color = 0
 #    draw.rectangle([(drawX1, drawY1), (drawX2, drawY2)], fill=color)
 
     rectY = int(abs(drawY2 - drawY1)) + 1
@@ -243,15 +273,47 @@ index = 0
 Tbb = 0
 
 i = 0
+
+actualDrawLngMin = 9999
+actualDrawLngMax = -9999
+actualDrawLatMin = 9999
+actualDrawLatMax = -9999
+
 if drawData:
-    for y in xrange(0, 3000):
-        for x in xrange(0, 3000):
-            Tbb = toTbb((ord(source[index]) << 8) + ord(source[index+1]))
-            plot(x, y, Tbb)
-            index += 2
-            i += 1
+    for y in xrange(0, matrixH):
+        lat = latNW - y * latDelta
+        mayDrawY = (lat > cropLatS and lat < cropLatN)
+        
+        if mayDrawY:
+            if actualDrawLatMin > lat:
+                actualDrawLatMin = lat
+            if actualDrawLatMax < lat:
+                actualDrawLatMax = lat
+            for x in xrange(0, matrixW):
+                lng = lngNW + x * lngDelta
+                mayDrawX = (lng > cropLngDiffW and lng < cropLngDiffE)
+
+                if mayDrawX:
+                    if actualDrawLngMin > lng:
+                        actualDrawLngMin = lng
+                    if actualDrawLngMax < lng:
+                        actualDrawLngMax = lng
+                    Tbb = toTbb((ord(source[index]) << 8) + ord(source[index+1]))
+                    plot(lat, lng, Tbb)
+
+                index += 2
+                i += 1
+        else:
+            index += 2 * matrixW
+            i += matrixW
+
         if y % 30 == 0:
             print str(y / 30.0) + '%'
+else:
+    actualDrawLngMin = 0
+    actualDrawLngMax = 0
+    actualDrawLatMin = 0
+    actualDrawLatMax = 0
 
 
 imgbuffer = ''.join([chr(i) for i in imgbuffer])
@@ -259,13 +321,18 @@ img = Image.frombytes('L', (w, h), imgbuffer)
 
 ##############################################################################
 # grey image adjust
-img = ImageOps.invert(img)
+        #img = ImageOps.invert(img) // using new scale of color, not useful
+actualDrawX1, actualDrawY1 = toPlotXY(actualDrawLatMax, actualDrawLngMin)
+actualDrawX2, actualDrawY2 = toPlotXY(actualDrawLatMin, actualDrawLngMax)
 
-img = ImageOps.equalize(img)
+imgCropRegion = (int(actualDrawX1), int(actualDrawY1), int(actualDrawX2), int(actualDrawY2))
+imgCrop = img.crop(imgCropRegion)
+imgCrop = ImageOps.equalize(imgCrop)
+img.paste(imgCrop, imgCropRegion)
 
 # enhance constrast
-contrastEnhancer = ImageEnhance.Contrast(img)
-contrastEnhancer.enhance(10)
+#contrastEnhancer = ImageEnhance.Contrast(img)
+#contrastEnhancer.enhance(10)
 
 """
 # brightness enhancer
@@ -303,13 +370,13 @@ if drawCoastline:
         points = each.points
         useLine = False
         for lng, lat in points:
-            if latNW < abs(lat):
+            if latNW < abs(lat) or (lat < cropLatS or lat > cropLatN):
                 continue
             if lng >= 0:
-                if lng < lngNW:
+                if lng < lngNW or lng < cropLngDiffW:
                     continue
             else:
-                if lng + 360 > lngNW + 180:
+                if lng + 360 > lngNW + 180 or lng + 360 > cropLngDiffE + 180:
                     continue
             useLine = True
         if useLine:

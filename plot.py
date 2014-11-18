@@ -164,8 +164,8 @@ def toPlotXY(lat, lng):
     if lng < 0:
         lng += 360
     lngDiff = lng - lngNW
-    drawX = r * (lngDiff * coeff)
-    drawY = h / 2 - rLatTan 
+    drawX = r * (lngDiff * coeff)  + 0
+    drawY = h / 2 - rLatTan        + 0
     return drawX, drawY
        
 ##############################################################################
@@ -173,19 +173,33 @@ def toPlotXY(lat, lng):
 
 from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 
-img = Image.new('L', (w, h), 'white')
-draw = ImageDraw.Draw(img)
+#img = Image.new('L', (w, h), 'white')
+imgbuffer = [255,] * (w + 1) * (h + 1)
+#draw = ImageDraw.Draw(img)
 
 drawW_2  = r * (latDelta / 2.0 * coeff)
 def plot(x, y, value):
-    global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, coeff
+    global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, coeff, imgbuffer
     lat = latNW - y * latDelta
     lng = lngNW + x * lngDelta
     drawX1, drawY1 = toPlotXY(lat + latDelta / 2.0, lng - latDelta / 2.0)
     drawX2, drawY2 = toPlotXY(lat - latDelta / 2.0, lng + lngDelta / 2.0)
 
-    color = (value - 100) / (340 - 100) * 255.0
-    draw.rectangle([(drawX1, drawY1), (drawX2, drawY2)], fill=color)
+    color = int((value - 100) / (340 - 100) * 255.0)
+#    draw.rectangle([(drawX1, drawY1), (drawX2, drawY2)], fill=color)
+
+    rectY = int(abs(drawY2 - drawY1)) + 1
+    rectX = int(abs(drawX2 - drawX1)) + 1
+    offset = int(drawY1) * w + int(drawX1)
+    if offset < 0:
+        return
+#    print drawY1, drawX1, rectY,rectX, offset
+#    exit()
+    for i in xrange(0, rectY):
+        for j in xrange(0, rectX):
+            imgbuffer[offset + j] = color
+        offset += w
+            
 
 ##############################################################################
 # draw image
@@ -197,13 +211,16 @@ i = 0
 for y in xrange(0, 3000):
     for x in xrange(0, 3000):
         Tbb = toTbb((ord(source[index]) << 8) + ord(source[index+1]))
-
         plot(x, y, Tbb)
-
         index += 2
         i += 1
     if y % 30 == 0:
         print str(y / 30.0) + '%'
+
+#print imgbuffer[:30]
+
+imgbuffer = ''.join([chr(i) for i in imgbuffer])
+img = Image.frombytes('L', (w, h), imgbuffer)
 
 ##############################################################################
 # grey image adjust
@@ -226,15 +243,14 @@ brightnessEnhancer.enhance(0.5)
 imgColor = Image.merge('RGB', (img, img, img))
 drawColor = ImageDraw.Draw(imgColor)
 
-def pointColor(latDeg, lngDeg, rgb, bold=2):
-    drawX, drawY = toPlotXY(latDeg, lngDeg)
-    drawColor.rectangle([(drawX - bold / 2.0, drawY - bold / 2.0), (drawX + bold / 2.0, drawY + bold / 2.0)], fill="rgb(%d,%d,%d)" % rgb)
-    return drawX, drawY
-
 def lineColor(lat1, lng1, lat2, lng2, rgb, bold):
     drawX1, drawY1 = toPlotXY(lat1, lng1)
     drawX2, drawY2 = toPlotXY(lat2, lng2)
     drawColor.line([(drawX1, drawY1), (drawX2, drawY2)], fill="rgb(%d,%d,%d)" % rgb, width=bold)
+def drawText(lat, lng, offsetX, offsetY, text, font):
+    drawX, drawY = toPlotXY(lat, lng)
+    drawColor.text((drawX + offsetX, drawY + offsetY), str(text), font=font, fill="red")
+    
 
 # draw coastline
 
@@ -260,7 +276,7 @@ for each in coastline.shapes():
         for lng, lat in points:
             curLng, curLat = lng, lat
             if start:
-                lineColor(lastLat, lastLng, curLat, curLng, (255, 0, 255), 2)
+                lineColor(lastLat, lastLng, curLat, curLng, (255, 0, 255), 1)
             else:
                 start = True
             lastLng, lastLat = curLng, curLat
@@ -269,24 +285,26 @@ for each in coastline.shapes():
 # draw grid lines
 
 font = ImageFont.truetype('font.ttf', 32)
-fontW, fontH = font.getsize('X')
 
-lastX, lastY = 0, 0
 for lat in xrange(-60, 61, 15):
-    for lng in xrange(int(lngNW), int(lngNW) + 130):
-        for x in xrange(0, 10):
-            lastX, lastY = pointColor(lat, lng + x / 10.0, (255,0,0))
-    drawColor.text((lastX - fontW * 3, lastY - fontH * 1.6), str(lat), font=font, fill="red")
+    lineColor(lat, lngNW, lat, lngNW + 130, (255,0,0), 2)
+    if lat > 0:
+        strlat = str(lat) + 'N'
+    elif lat < 0:
+        strlat = str(-lat) + 'S'
+    else:
+        strlat = 'EQUATOR'
+    textW, textH = font.getsize(strlat)
+    drawText(lat, lngNW, 2, -textH-5, strlat, font)
 
 for lng in xrange(60, 300, 15):
-    for lat in xrange(-70, 70):
-        for y in xrange(0, 10):
-            lastX, lastY = pointColor(lat + y / 10.0, lng , (255,0,0))
+    lineColor(-70, lng, 70, lng, (255, 0, 0), 2)
     if lng > 180:
-        strlng = str(lng - 360)
+        strlng = str(360 - lng) + 'W'
     else:
-        strlng = str(lng)
-    drawColor.text((lastX - fontW * 3, fontH * 1.6), strlng, font=font, fill="red")
+        strlng = str(lng) + 'E'
+    textW, textH = font.getsize(strlng)
+    drawText(0, lng, -textW-2, 2, strlng, font)
 
 ##############################################################################
 

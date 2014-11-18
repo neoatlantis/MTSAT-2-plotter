@@ -20,6 +20,13 @@ import math
 
 ##############################################################################
 
+drawData = True
+drawCoastline = True
+
+markRegion = [
+    {"region": [(25.8 - 17.966, 110.0 - 20), (25.8 + 17.966, 110.0 + 20)], "center": True},
+]
+
 convert = """
 0:=330.06
 30:=327.69
@@ -157,7 +164,7 @@ convert = """
 """
 ir = 1
 dk = 1
-time = '201411172330'
+time = '201411181530'
 
 source = open('testdata/%s.ir/IMG_DK0%dIR%d_%s.geoss' % (time, dk, ir, time), 'r').read()
 ##############################################################################
@@ -236,16 +243,16 @@ index = 0
 Tbb = 0
 
 i = 0
-for y in xrange(0, 3000):
-    for x in xrange(0, 3000):
-        Tbb = toTbb((ord(source[index]) << 8) + ord(source[index+1]))
-        plot(x, y, Tbb)
-        index += 2
-        i += 1
-    if y % 30 == 0:
-        print str(y / 30.0) + '%'
+if drawData:
+    for y in xrange(0, 3000):
+        for x in xrange(0, 3000):
+            Tbb = toTbb((ord(source[index]) << 8) + ord(source[index+1]))
+            plot(x, y, Tbb)
+            index += 2
+            i += 1
+        if y % 30 == 0:
+            print str(y / 30.0) + '%'
 
-#print imgbuffer[:30]
 
 imgbuffer = ''.join([chr(i) for i in imgbuffer])
 img = Image.frombytes('L', (w, h), imgbuffer)
@@ -272,42 +279,50 @@ imgColor = Image.merge('RGB', (img, img, img))
 drawColor = ImageDraw.Draw(imgColor)
 
 def lineColor(lat1, lng1, lat2, lng2, rgb, bold):
+    global drawColor
     drawX1, drawY1 = toPlotXY(lat1, lng1)
     drawX2, drawY2 = toPlotXY(lat2, lng2)
     drawColor.line([(drawX1, drawY1), (drawX2, drawY2)], fill="rgb(%d,%d,%d)" % rgb, width=bold)
 def drawText(lat, lng, offsetX, offsetY, text, font):
+    global drawColor
     drawX, drawY = toPlotXY(lat, lng)
     drawColor.text((drawX + offsetX, drawY + offsetY), str(text), font=font, fill="red")
+def drawCross(lat, lng, size, color):
+    global drawColor
+    drawX, drawY = toPlotXY(lat, lng)
+    size = size / 2
+    drawColor.line([(drawX - size, drawY), (drawX + size, drawY)], fill="rgb(%d,%d,%d)" % color, width = 2)
+    drawColor.line([(drawX, drawY - size), (drawX, drawY + size)], fill="rgb(%d,%d,%d)" % color, width = 2)
     
 
 # draw coastline
-
-import shapefile
-coastline = shapefile.Reader('coastline/ne_10m_coastline')
-for each in coastline.shapes():
-    points = each.points
-    useLine = False
-    for lng, lat in points:
-        if latNW < abs(lat):
-            continue
-        if lng >= 0:
-            if lng < lngNW:
-                continue
-        else:
-            if lng + 360 > lngNW + 180:
-                continue
-        useLine = True
-    if useLine:
-        start = False
-        lastLng, lastLat = 0, 0
-        curLng, curLat = 0, 0
+if drawCoastline:
+    import shapefile
+    coastline = shapefile.Reader('coastline/ne_10m_coastline')
+    for each in coastline.shapes():
+        points = each.points
+        useLine = False
         for lng, lat in points:
-            curLng, curLat = lng, lat
-            if start:
-                lineColor(lastLat, lastLng, curLat, curLng, (255, 0, 255), 1)
+            if latNW < abs(lat):
+                continue
+            if lng >= 0:
+                if lng < lngNW:
+                    continue
             else:
-                start = True
-            lastLng, lastLat = curLng, curLat
+                if lng + 360 > lngNW + 180:
+                    continue
+            useLine = True
+        if useLine:
+            start = False
+            lastLng, lastLat = 0, 0
+            curLng, curLat = 0, 0
+            for lng, lat in points:
+                curLng, curLat = lng, lat
+                if start:
+                    lineColor(lastLat, lastLng, curLat, curLng, (255, 0, 255), 1)
+                else:
+                    start = True
+                lastLng, lastLat = curLng, curLat
 
 
 # draw grid lines
@@ -333,6 +348,24 @@ for lng in xrange(60, 300, 15):
         strlng = str(lng) + 'E'
     textW, textH = font.getsize(strlng)
     drawText(0, lng, -textW-2, 2, strlng, font)
+
+# mark out regions
+for each in markRegion:
+    region = each["region"]
+    center = each["center"]
+    p1, p2 = region[:2]
+    p1Lat, p1Lng = p1
+    p2Lat, p2Lng = p2
+    centerLat, centerLng = (p1Lat + p2Lat) / 2.0, (p1Lng + p2Lng) / 2.0 
+    
+    lineColor(p1Lat, p1Lng, p2Lat, p1Lng, (0, 0, 255), 2)
+    lineColor(p2Lat, p1Lng, p2Lat, p2Lng, (0, 0, 255), 2)
+    lineColor(p2Lat, p2Lng, p1Lat, p2Lng, (0, 0, 255), 2)
+    lineColor(p1Lat, p2Lng, p1Lat, p1Lng, (0, 0, 255), 2)
+
+    if center:
+        drawCross(centerLat, centerLng, 16, (0,0,255))
+
 
 ##############################################################################
 

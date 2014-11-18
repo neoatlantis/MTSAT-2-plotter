@@ -228,7 +228,6 @@ for y in xrange(0, 3000):
         i += 1
     if y % 30 == 0:
         print str(y / 30.0) + '%'
-    break
 
 #print imgbuffer[:30]
 

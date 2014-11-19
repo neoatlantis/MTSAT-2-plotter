@@ -203,23 +203,11 @@ class plotter:
         else:
             self.sourceRegionSize = (srcLatN-srcLatS, 360-srcLngW+srcLngE)
 
-    """
-    def setProjection(self, methodName, outputHeight):
-        if 'equirectangular' == methodName:
-            h = outputHeight
-            r = h / 2
-            w = int(r * self.coeff * self.sourceRegionSize[1]) + 1
-            self.projectionParams = (w, h, r)
-            self.projectionMethod = 1
-        elif 'mercator' == methodName:
-            h = outputHeight
-            r = h / (math.tan(self.sourceRegion[0] * self.coeff) - math.tan(self.sourceRegion[2] * self.coeff))
-            w = int(r * self.coeff * self.sourceRegionSize[1]) + 1
-            self.projectionParams = (w, h, r)
-            self.projectionMethod = 2
-        else:
-            raise Exception('Unknown projection method.')
-    """
+    def setDataDimension(self, w, h):
+        self.dataDimension = (w, h)
+
+    def setDataResolution(self, latRes, lngRes):
+        self.dataResolution = (latRes, lngRes) # deltaLat, deltaLng
 
     def _getPaintColor(self, uint16):
         # Convert the satellite result, which is Uint16, into Uint8 grey scale
@@ -235,35 +223,20 @@ class plotter:
             color = 0
         return color
 
-    """
     def __project(self, lat, lng):
-        if 1 == self.projectionMethod: # Equirectangular projection
-            w, h, r = self.projectionParams
-            if lng < 0:
-                lng += 360
-            lngDiff = lng - self.sourceRegion[1] # lng - srcLngW
-            drawX = r * (lngDiff * self.coeff)
-            drawY = (h - r * lat / self.sourceRegionSize[0]) / 2
-            return int(drawX), int(drawY)
-        elif 2 == self.projectionMethod: # Mercator Projection
-            w, h, r = self.projectionParams
-            rLatTan = r * math.tan(lat * self.coeff)
-            if lng < 0:
-                lng += 360
-            lngDiff = lng - self.sourceRegion[1] # lng - srcLngW
-            drawX = r * (lngDiff * self.coeff) 
-            drawY = h / 2 - rLatTan 
-            return int(drawX), int(drawY)
-        else:
-            raise Exception('Projection method not choosen.')
-    """
+        if lng < 0:
+            lng += 360
+        lngDiff = lng - self.sourceRegion[1] # lng - srcLngW
+        drawX = lngDiff / self.dataResolution[1]
+        drawY = self.dataDimension[1] / 2 - lat / self.dataResolution[0]
+        return int(drawX), int(drawY)
 
-    def plotData(self, dataDimension, dataString):
+    def plotData(self, dataString):
         # plot data
         #   dataDimension := (X-points, Y-points), given by MTSAT-2
 
         dataMatrix = [ord(i) for i in dataString]
-        dataSize = dataDimension[0] * dataDimension[1]
+        dataSize = self.dataDimension[0] * self.dataDimension[1]
         if dataSize != len(dataMatrix) / 2:
             raise Exception('Wrong data dimension specification.')
         
@@ -276,10 +249,79 @@ class plotter:
             dataColorMatrix[ti] = self._getPaintColor(uint16)
             si += 2
 
-        # DEBUG
         imgBuffer = ''.join([chr(i) for i in dataColorMatrix])
-        img = Image.frombytes('L', dataDimension, imgBuffer)
-        img.show()
+        img = Image.frombytes('L', self.dataDimension, imgBuffer)
+        imgColor = Image.merge('RGB', (img, img, img))
+        return imgColor
+
+    def _lineColor(self, imgDraw, lat1, lng1, lat2, lng2, rgb, bold):
+        drawX1, drawY1 = self.__project(lat1, lng1)
+        drawX2, drawY2 = self.__project(lat2, lng2)
+        imgDraw.line([(drawX1, drawY1), (drawX2, drawY2)], fill="rgb(%d,%d,%d)" % rgb, width=bold)
+
+    def _drawText(self, imgDraw, lat, lng, offsetX, offsetY, text, font):
+        drawX, drawY = self.__project(lat, lng)
+        imgDraw.text((drawX + offsetX, drawY + offsetY), str(text), font=font, fill="red")
+
+    def _drawCross(self, lat, lng, size, color):
+        global drawColor
+        drawX, drawY = toPlotXY(lat, lng)
+        size = size / 2
+        drawColor.line([(drawX - size, drawY), (drawX + size, drawY)], fill="rgb(%d,%d,%d)" % color, width = 2)
+        drawColor.line([(drawX, drawY - size), (drawX, drawY + size)], fill="rgb(%d,%d,%d)" % color, width = 2)
+
+    def plotCoastlines(self, img):
+
+
+        return img
+
+    def plotCoordinateLines(self, img):
+        imgDraw = ImageDraw.Draw(img)
+        font = ImageFont.truetype('font.ttf', 32)
+        
+        latN, lngW, latS, lngE = self.sourceRegion
+        latHeight, lngWidth = self.sourceRegionSize
+
+        for lat in xrange(-60, 61, 15):
+            self._lineColor(imgDraw, lat, lngW, lat, lngW + lngWidth, (255,0,0), 2)
+            if lat > 0:
+                strlat = str(lat) + 'N'
+            elif lat < 0:
+                strlat = str(-lat) + 'S'
+            else:
+                strlat = 'EQUATOR'
+            textW, textH = font.getsize(strlat)
+            self._drawText(imgDraw, lat, lngW, 2, -textH-5, strlat, font)
+
+        for lng in xrange(60, 300, 15):
+            self._lineColor(imgDraw, latS, lng, latN, lng, (255, 0, 0), 2)
+            if lng > 180:
+                strlng = str(360 - lng) + 'W'
+            else:
+                strlng = str(lng) + 'E'
+            textW, textH = font.getsize(strlng)
+            self._drawText(imgDraw, 0, lng, -textW-2, 2, strlng, font)
+
+        return img
+
+        """
+        # mark out regions
+        for each in markRegion:
+            region = each["region"]
+            center = each["center"]
+            p1, p2 = region[:2]
+            p1Lat, p1Lng = p1
+            p2Lat, p2Lng = p2
+            centerLat, centerLng = (p1Lat + p2Lat) / 2.0, (p1Lng + p2Lng) / 2.0 
+            
+            lineColor(imgDraw, p1Lat, p1Lng, p2Lat, p1Lng, (0, 0, 255), 2)
+            lineColor(imgDraw, p2Lat, p1Lng, p2Lat, p2Lng, (0, 0, 255), 2)
+            lineColor(p2Lat, p2Lng, p1Lat, p2Lng, (0, 0, 255), 2)
+            lineColor(p1Lat, p2Lng, p1Lat, p1Lng, (0, 0, 255), 2)
+
+            if center:
+                drawCross(centerLat, centerLng, 16, (0,0,255))
+        """
 
 if __name__ == '__main__':
     source = open('testdata/sample.geoss', 'r').read()
@@ -287,30 +329,16 @@ if __name__ == '__main__':
     p = plotter()
     p.setConvertTable(convert)
     p.setSourceRegion(85.02, 59.98, -60.02, -154.98)
-#    p.setProjection('equirectangular', 2000)
-    p.plotData((3000, 3000), source)
+    p.setDataDimension(3000, 3000)
+    p.setDataResolution(0.04, 0.04)
+    img = p.plotData(source)
+    img = p.plotCoordinateLines(img)
 
+    img.save('output.png')
     exit()
                 
 
             
-
-source = open('testdata/%s.ir/IMG_DK0%dIR%d_%s.geoss' % (time, dk, ir, time), 'r').read()
-##############################################################################
-
-
-##############################################################################
-# Plotting and other parameters
-
-lngNW = 85.02
-latNW = 59.98
-latDelta = +0.04
-lngDelta = +0.04
-lngWidth = lngDelta * matrixW
-coeff = math.pi / 180.0
-h = 3000 # draw picture height of h
-
-       
 
 ##############################################################################
 # grey image adjust
@@ -335,24 +363,6 @@ brightnessEnhancer.enhance(0.5)
 
 ##############################################################################
 
-imgColor = Image.merge('RGB', (img, img, img))
-drawColor = ImageDraw.Draw(imgColor)
-
-def lineColor(lat1, lng1, lat2, lng2, rgb, bold):
-    global drawColor
-    drawX1, drawY1 = toPlotXY(lat1, lng1)
-    drawX2, drawY2 = toPlotXY(lat2, lng2)
-    drawColor.line([(drawX1, drawY1), (drawX2, drawY2)], fill="rgb(%d,%d,%d)" % rgb, width=bold)
-def drawText(lat, lng, offsetX, offsetY, text, font):
-    global drawColor
-    drawX, drawY = toPlotXY(lat, lng)
-    drawColor.text((drawX + offsetX, drawY + offsetY), str(text), font=font, fill="red")
-def drawCross(lat, lng, size, color):
-    global drawColor
-    drawX, drawY = toPlotXY(lat, lng)
-    size = size / 2
-    drawColor.line([(drawX - size, drawY), (drawX + size, drawY)], fill="rgb(%d,%d,%d)" % color, width = 2)
-    drawColor.line([(drawX, drawY - size), (drawX, drawY + size)], fill="rgb(%d,%d,%d)" % color, width = 2)
     
 
 # draw coastline
@@ -387,44 +397,6 @@ if drawCoastline:
 
 # draw grid lines
 
-font = ImageFont.truetype('font.ttf', 32)
-
-for lat in xrange(-60, 61, 15):
-    lineColor(lat, lngNW, lat, lngNW + 130, (255,0,0), 2)
-    if lat > 0:
-        strlat = str(lat) + 'N'
-    elif lat < 0:
-        strlat = str(-lat) + 'S'
-    else:
-        strlat = 'EQUATOR'
-    textW, textH = font.getsize(strlat)
-    drawText(lat, lngNW, 2, -textH-5, strlat, font)
-
-for lng in xrange(60, 300, 15):
-    lineColor(-70, lng, 70, lng, (255, 0, 0), 2)
-    if lng > 180:
-        strlng = str(360 - lng) + 'W'
-    else:
-        strlng = str(lng) + 'E'
-    textW, textH = font.getsize(strlng)
-    drawText(0, lng, -textW-2, 2, strlng, font)
-
-# mark out regions
-for each in markRegion:
-    region = each["region"]
-    center = each["center"]
-    p1, p2 = region[:2]
-    p1Lat, p1Lng = p1
-    p2Lat, p2Lng = p2
-    centerLat, centerLng = (p1Lat + p2Lat) / 2.0, (p1Lng + p2Lng) / 2.0 
-    
-    lineColor(p1Lat, p1Lng, p2Lat, p1Lng, (0, 0, 255), 2)
-    lineColor(p2Lat, p1Lng, p2Lat, p2Lng, (0, 0, 255), 2)
-    lineColor(p2Lat, p2Lng, p1Lat, p2Lng, (0, 0, 255), 2)
-    lineColor(p1Lat, p2Lng, p1Lat, p1Lng, (0, 0, 255), 2)
-
-    if center:
-        drawCross(centerLat, centerLng, 16, (0,0,255))
 
 
 ##############################################################################

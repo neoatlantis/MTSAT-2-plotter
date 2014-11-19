@@ -17,24 +17,12 @@ this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import math
+from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 
+from plotconfig import drawData, drawCoastline, projectionMethod, markRegion
+from plotconfig import cropLatN, cropLatS, cropLngDiffW, cropLngDiffE
 ##############################################################################
 
-drawData = True
-drawCoastline = True
-
-projectionMethod = 'equirectangular'
-
-markRegion = [
-    {"region": [(25.8 - 17.966, 110.0 - 20), (25.8 + 17.966, 110.0 + 20)], "center": True},
-]
-
-# set the actual drawn region. may not be the whole image, in order to save
-# time
-cropLatN = 25.8 + 17.966 
-cropLatS = 25.8 - 17.966 
-cropLngDiffW = 110.0 - 20.0
-cropLngDiffE = 110.0 + 20.0
 
 matrixW = 3000
 matrixH = 3000
@@ -178,20 +166,179 @@ ir = 1
 dk = 1
 time = '201411181530'
 
+class plotter:
+
+    coeff = math.pi / 180.0
+    projectionMethod = 'equirectangular'
+    
+    def __init__(self):
+        pass
+
+    def setConvertTable(self, convert):
+        # Cache the tablized curve. A look up table from Uint16 to Color
+        # Value(0-255) is calculated and cached.
+        convert = convert.strip().split('\n')
+        curve = [tuple(i.split(':=')) for i in convert]
+        curve = [(int(i), float(j)) for i,j in curve]
+        curve = sorted(curve, key = lambda i:i[0])
+
+        tableSize = 65536 # TODO use the size from curve
+        self.lookupTable = [0,] * tableSize
+
+        curveLen = len(curve)
+        for x in xrange(0, tableSize):
+            for i in xrange(0, curveLen):
+                if x >= curve[i][0] and x <= curve[i+1][0]:
+                    break
+            left, right = curve[i], curve[i+1]
+            value = 1.0 * (x - left[0]) / (right[0] - left[0])
+            value *= (right[1] - left[1])
+            value += left[1]
+            self.lookupTable[x] = self.__getColorScale(value)
+
+    def setSourceRegion(self, srcLatN, srcLngW, srcLatS, srcLngE):
+        self.sourceRegion = (srcLatN, srcLngW, srcLatS, srcLngE)
+        if srcLngW < srcLngE:
+            self.sourceRegionSize = (srcLatN-srcLatS, srcLngE-srcLngW)
+        else:
+            self.sourceRegionSize = (srcLatN-srcLatS, 360-srcLngW+srcLngE)
+
+    def setProjection(self, methodName, outputHeight):
+        if 'equirectangular' == methodName:
+            h = outputHeight
+            r = h / 2
+            w = int(r * self.coeff * self.sourceRegionSize[1]) + 1
+            self.projectionParams = (w, h, r)
+            self.projectionMethod = 1
+        elif 'mercator' == methodName:
+            h = outputHeight
+            r = h / (math.tan(self.sourceRegion[0] * self.coeff) - math.tan(self.sourceRegion[2] * self.coeff))
+            w = int(r * self.coeff * self.sourceRegionSize[1]) + 1
+            self.projectionParams = (w, h, r)
+            self.projectionMethod = 2
+        else:
+            raise Exception('Unknown projection method.')
+
+    def _getPaintColor(self, uint16):
+        # Convert the satellite result, which is Uint16, into Uint8 grey scale
+        # color. This is done by simply looking up the lookup table
+        # precalculated.
+        return self.lookupTable[uint16]
+
+    def __getColorScale(self, Tbb):
+        color = 255 - int((Tbb - 200) / (300 - 200) * 255.0)
+        if color > 255:
+            color = 255
+        elif color < 0:
+            color = 0
+        return color
+
+    def __project(self, lat, lng):
+        if 1 == self.projectionMethod: # Equirectangular projection
+            w, h, r = self.projectionParams
+            if lng < 0:
+                lng += 360
+            lngDiff = lng - self.sourceRegion[1] # lng - srcLngW
+            drawX = r * (lngDiff * self.coeff)
+            drawY = (h - r * lat / self.sourceRegionSize[0]) / 2
+            return int(drawX), int(drawY)
+        elif 2 == self.projectionMethod: # Mercator Projection
+            w, h, r = self.projectionParams
+            rLatTan = r * math.tan(lat * self.coeff)
+            if lng < 0:
+                lng += 360
+            lngDiff = lng - self.sourceRegion[1] # lng - srcLngW
+            drawX = r * (lngDiff * self.coeff) 
+            drawY = h / 2 - rLatTan 
+            return int(drawX), int(drawY)
+        else:
+            raise Exception('Projection method not choosen.')
+
+    def plotData(self, dataDimension, dataString):
+        # plot data
+        #   dataDimension := (X-points, Y-points), given by MTSAT-2
+
+        dataMatrix = [ord(i) for i in dataString]
+        dataSize = dataDimension[0] * dataDimension[1]
+        if dataSize != len(dataMatrix) / 2:
+            raise Exception('Wrong data dimension specification.')
+        
+        # generate data color matrix
+        dataColorMatrix = [0,] * dataSize
+        si, ti = 0, 0
+        uint16 = 0
+        for ti in xrange(0, dataSize): # get color matrix from raw data
+            uint16 = (dataMatrix[si] << 8) + dataMatrix[si+1]
+            dataColorMatrix[ti] = self._getPaintColor(uint16)
+            si += 2
+
+        # prepare for the projection
+        w, h, r = self.projectionParams
+        imgBuffer = [0,] * (w + 1) * (h + 1)
+        latDelta = self.sourceRegionSize[0] / dataDimension[1]
+        lngDelta = self.sourceRegionSize[1] / dataDimension[0]
+        latDelta2 = latDelta / 2.0
+        lngDelta2 = lngDelta / 2.0
+
+        # DEBUG
+        imgBuffer = ''.join([chr(i) for i in dataColorMatrix])
+        img = Image.frombytes('L', (3000, 3000), imgBuffer)
+        img.show()
+        exit()
+
+
+        # projection by scanning dataColorMatrix and filling the color into
+        # imgBuffer
+        ci = 0
+        lat = self.sourceRegion[0] # north lat.
+        try:
+            for y in xrange(0, dataDimension[1]):
+                lng = self.sourceRegion[1] # west lng.
+                for x in xrange(0, dataDimension[0]):
+                    X1, Y1 = self.__project(lat + latDelta2, lng - lngDelta2)
+                    X2, Y2 = self.__project(lat - latDelta2, lng + lngDelta2)
+
+                    rectY = abs(Y2 - Y1) + 1
+                    rectX = abs(X2 - X1) + 1
+                    offset = Y1 * w + X1
+                    if offset < 0:
+                        continue
+                    for i in xrange(0, rectY):
+                        for j in xrange(0, rectX):
+                            imgBuffer[offset + j] = dataColorMatrix[ci]
+                        offset += w
+
+                    lng += lngDelta
+                    ci += 1
+                lat += latDelta
+        except:
+            print w, h, w*h, offset, j, ci
+            print X1, Y1, X2, Y2
+            print lat, lng
+            exit()
+                
+        imgBuffer = ''.join([chr(i) for i in imgBuffer])
+        img = Image.frombytes('L', (w, h), imgBuffer)
+
+        img.show()
+
+if __name__ == '__main__':
+    source = open('testdata/sample.geoss', 'r').read()
+
+    p = plotter()
+    p.setConvertTable(convert)
+    p.setSourceRegion(85.02, 59.98, -60.02, -154.98)
+    p.setProjection('mercator', 2000)
+    p.plotData((3000, 3000), source)
+
+    exit()
+                
+
+            
+
 source = open('testdata/%s.ir/IMG_DK0%dIR%d_%s.geoss' % (time, dk, ir, time), 'r').read()
 ##############################################################################
 
-convertTable = [tuple(i.split(':=')) for i in convert.strip().split('\n')]
-convertTable = [(int(i), float(j)) for i,j in convertTable]
-convertTable = sorted(convertTable, key = lambda i:i[0])
-def toTbb(x):
-    global convertTable
-    for i in xrange(0, len(convertTable)):
-        if x >= convertTable[i][0]:
-            break
-    left, right = convertTable[i], convertTable[i+1]
-    return 1.0 * (x - left[0]) / (right[0] - left[0]) * (right[1] - left[1])\
-        + left[1]
 
 ##############################################################################
 # Plotting and other parameters
@@ -204,120 +351,7 @@ lngWidth = lngDelta * matrixW
 coeff = math.pi / 180.0
 h = 3000 # draw picture height of h
 
-if 'equirectangular' == projectionMethod:
-    # Equirectangular projection
-    r = h / 2
-    w = int(r * coeff * lngWidth) + 1
-    def toPlotXY(lat, lng):
-        global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, coeff
-        if lng < 0:
-            lng += 360
-        lngDiff = lng - lngNW
-        drawX = r * (lngDiff * coeff)
-        drawY = h / 2 - r * lat / latNW
-        return drawX, drawY
-    
-elif 'mercator' == projectionMethod:
-    # Mercator Projection
-    r = h / 2 / math.tan(latNW * coeff)
-    w = int(r * coeff * lngWidth) + 1
-    def toPlotXY(lat, lng):
-        global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, coeff
-        rLatTan = r * math.tan(lat * coeff)
-        if lng < 0:
-            lng += 360
-        lngDiff = lng - lngNW
-        drawX = r * (lngDiff * coeff)  + 0
-        drawY = h / 2 - rLatTan        + 0
-        return drawX, drawY
        
-##############################################################################
-# Prepare for image drawing
-
-from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
-
-#img = Image.new('L', (w, h), 'white')
-imgbuffer = [0,] * (w + 1) * (h + 1)
-#draw = ImageDraw.Draw(img)
-
-drawW_2  = r * (latDelta / 2.0 * coeff)
-def plot(lat, lng, value):
-    global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, imgbuffer
-    drawX1, drawY1 = toPlotXY(lat + latDelta / 2.0, lng - latDelta / 2.0)
-    drawX2, drawY2 = toPlotXY(lat - latDelta / 2.0, lng + lngDelta / 2.0)
-
-    color = 255 - int((value - 200) / (300 - 200) * 255.0)
-    if color > 255:
-        color = 255
-    if color < 0:
-        color = 0
-#    draw.rectangle([(drawX1, drawY1), (drawX2, drawY2)], fill=color)
-
-    rectY = int(abs(drawY2 - drawY1)) + 1
-    rectX = int(abs(drawX2 - drawX1)) + 1
-    offset = int(drawY1) * w + int(drawX1)
-    if offset < 0:
-        return
-#    print drawY1, drawX1, rectY,rectX, offset
-#    exit()
-    for i in xrange(0, rectY):
-        for j in xrange(0, rectX):
-            imgbuffer[offset + j] = color
-        offset += w
-            
-
-##############################################################################
-# draw image
-
-index = 0
-Tbb = 0
-
-i = 0
-
-actualDrawLngMin = 9999
-actualDrawLngMax = -9999
-actualDrawLatMin = 9999
-actualDrawLatMax = -9999
-
-if drawData:
-    for y in xrange(0, matrixH):
-        lat = latNW - y * latDelta
-        mayDrawY = (lat > cropLatS and lat < cropLatN)
-        
-        if mayDrawY:
-            if actualDrawLatMin > lat:
-                actualDrawLatMin = lat
-            if actualDrawLatMax < lat:
-                actualDrawLatMax = lat
-            for x in xrange(0, matrixW):
-                lng = lngNW + x * lngDelta
-                mayDrawX = (lng > cropLngDiffW and lng < cropLngDiffE)
-
-                if mayDrawX:
-                    if actualDrawLngMin > lng:
-                        actualDrawLngMin = lng
-                    if actualDrawLngMax < lng:
-                        actualDrawLngMax = lng
-                    Tbb = toTbb((ord(source[index]) << 8) + ord(source[index+1]))
-                    plot(lat, lng, Tbb)
-
-                index += 2
-                i += 1
-        else:
-            index += 2 * matrixW
-            i += matrixW
-
-        if y % 60 == 0:
-            print str(y / 60.0) + '%'
-else:
-    actualDrawLngMin = 0
-    actualDrawLngMax = 0
-    actualDrawLatMin = 0
-    actualDrawLatMax = 0
-
-
-imgbuffer = ''.join([chr(i) for i in imgbuffer])
-img = Image.frombytes('L', (w, h), imgbuffer)
 
 ##############################################################################
 # grey image adjust

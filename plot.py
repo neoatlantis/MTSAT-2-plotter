@@ -21,6 +21,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 
 from plotconfig import drawData, drawCoastline, projectionMethod, markRegion
 from plotconfig import cropLatN, cropLatS, cropLngDiffW, cropLngDiffE
+import shapefile
 ##############################################################################
 
 
@@ -271,8 +272,33 @@ class plotter:
         drawColor.line([(drawX, drawY - size), (drawX, drawY + size)], fill="rgb(%d,%d,%d)" % color, width = 2)
 
     def plotCoastlines(self, img):
-
-
+        imgDraw = ImageDraw.Draw(img)
+        latN, lngW, latS, lngE = self.sourceRegion
+        coastline = shapefile.Reader('coastline/ne_50m_coastline')
+        for each in coastline.shapes():
+            points = each.points
+            useLine = False
+            for lng, lat in points:
+                if latN < abs(lat):
+                    continue
+                if lng >= 0:
+                    if lng < lngW:
+                        continue
+                else:
+                    if lng + 360 > lngW + 180:
+                        continue
+                useLine = True
+            if useLine:
+                start = False
+                lastLng, lastLat = 0, 0
+                curLng, curLat = 0, 0
+                for lng, lat in points:
+                    curLng, curLat = lng, lat
+                    if start:
+                        self._lineColor(imgDraw, lastLat, lastLng, curLat, curLng, (255, 0, 255), 1)
+                    else:
+                        start = True
+                    lastLng, lastLat = curLng, curLat
         return img
 
     def plotCoordinateLines(self, img):
@@ -323,16 +349,82 @@ class plotter:
                 drawCross(centerLat, centerLng, 16, (0,0,255))
         """
 
+    def packImage(self, img):
+        font = ImageFont.truetype('font.ttf', 32)
+        margin = 20
+        w, h = img.size
+        imgEnv = Image.new('RGB', (w + 700 + 2 * margin, h + 2 * margin), 'rgb(100,100,100)')
+        imgCrop = img.crop((0, 0, w, h))
+
+        imgEnv.paste(imgCrop, (margin, margin, margin + w, margin + h))
+
+        envDraw = ImageDraw.Draw(imgEnv)
+        envT = margin
+        envL = w + margin * 2
+        textH = font.getsize('X')[1]
+
+        timestamp = time[0:4] + '-' + time[4:6] + '-' + time[6:8] + ' '
+        timestamp += time[8:10] + ':' + time[10:12] + ' '
+        timestamp += 'UTC'
+
+        text = ("""
+        NeoAtlantis MTSAT-2 IR Data Plotter
+        ===================================
+
+        Timestamp: %s
+        IR: %d
+
+
+        This program is free software: you
+        can redistribute it and/or modify
+        it under the terms of the GNU
+        General Public License as published
+        by the Free Software Foundation,
+        either version 3 of the License, or
+        (at your option) any later version.
+
+        This program is distributed in the
+        hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even
+        the implied warranty of 
+        MERCHANTABILITY or FITNESS FOR A
+        PARTICULAR PURPOSE.  See the GNU
+        General Public License for more
+        details.
+
+        You should have received a copy of
+        the GNU General Public License
+        along with this program.  If not,
+        see <http://www.gnu.org/licenses/>.
+        """ % (timestamp, ir)).strip().split('\n')
+        
+        for line in text:
+            envDraw.text((envL, envT), line.strip(), font=font, fill="black")
+            envT += textH * 1.5
+        
+        return imgEnv
+
+
 if __name__ == '__main__':
     source = open('testdata/sample.geoss', 'r').read()
 
     p = plotter()
     p.setConvertTable(convert)
-    p.setSourceRegion(85.02, 59.98, -60.02, -154.98)
+    p.setSourceRegion(59.98, 85.02, -60.02, -154.98)
     p.setDataDimension(3000, 3000)
     p.setDataResolution(0.04, 0.04)
+
+    print "Plotting data..."
     img = p.plotData(source)
+
+    print "Adding coastlines..."
+    img = p.plotCoastlines(img)
+
+    print "Adding coordinate lines..."
     img = p.plotCoordinateLines(img)
+
+    print "Packing image..."
+    img = p.packImage(img)
 
     img.save('output.png')
     exit()
@@ -366,33 +458,6 @@ brightnessEnhancer.enhance(0.5)
     
 
 # draw coastline
-if drawCoastline:
-    import shapefile
-    coastline = shapefile.Reader('coastline/ne_10m_coastline')
-    for each in coastline.shapes():
-        points = each.points
-        useLine = False
-        for lng, lat in points:
-            if latNW < abs(lat) or (lat < cropLatS or lat > cropLatN):
-                continue
-            if lng >= 0:
-                if lng < lngNW or lng < cropLngDiffW:
-                    continue
-            else:
-                if lng + 360 > lngNW + 180 or lng + 360 > cropLngDiffE + 180:
-                    continue
-            useLine = True
-        if useLine:
-            start = False
-            lastLng, lastLat = 0, 0
-            curLng, curLat = 0, 0
-            for lng, lat in points:
-                curLng, curLat = lng, lat
-                if start:
-                    lineColor(lastLat, lastLng, curLat, curLng, (255, 0, 255), 1)
-                else:
-                    start = True
-                lastLng, lastLat = curLng, curLat
 
 
 # draw grid lines

@@ -31,10 +31,10 @@ markRegion = [
 
 # set the actual drawn region. may not be the whole image, in order to save
 # time
-cropLatN = 45 
-cropLatS = 5 
-cropLngDiffW = 90
-cropLngDiffE = 130
+cropLatN = 25.8 + 17.966 
+cropLatS = 25.8 - 17.966 
+cropLngDiffW = 110.0 - 20.0
+cropLngDiffE = 110.0 + 20.0
 
 matrixW = 3000
 matrixH = 3000
@@ -242,7 +242,7 @@ imgbuffer = [0,] * (w + 1) * (h + 1)
 
 drawW_2  = r * (latDelta / 2.0 * coeff)
 def plot(lat, lng, value):
-    global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, coeff, imgbuffer
+    global draw, r, w, h, latDelta, lngDelta, lngNW, latNW, drawW_2, imgbuffer
     drawX1, drawY1 = toPlotXY(lat + latDelta / 2.0, lng - latDelta / 2.0)
     drawX2, drawY2 = toPlotXY(lat - latDelta / 2.0, lng + lngDelta / 2.0)
 
@@ -307,8 +307,8 @@ if drawData:
             index += 2 * matrixW
             i += matrixW
 
-        if y % 30 == 0:
-            print str(y / 30.0) + '%'
+        if y % 60 == 0:
+            print str(y / 60.0) + '%'
 else:
     actualDrawLngMin = 0
     actualDrawLngMax = 0

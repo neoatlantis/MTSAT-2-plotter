@@ -203,6 +203,7 @@ class plotter:
         else:
             self.sourceRegionSize = (srcLatN-srcLatS, 360-srcLngW+srcLngE)
 
+    """
     def setProjection(self, methodName, outputHeight):
         if 'equirectangular' == methodName:
             h = outputHeight
@@ -218,6 +219,7 @@ class plotter:
             self.projectionMethod = 2
         else:
             raise Exception('Unknown projection method.')
+    """
 
     def _getPaintColor(self, uint16):
         # Convert the satellite result, which is Uint16, into Uint8 grey scale
@@ -233,6 +235,7 @@ class plotter:
             color = 0
         return color
 
+    """
     def __project(self, lat, lng):
         if 1 == self.projectionMethod: # Equirectangular projection
             w, h, r = self.projectionParams
@@ -253,6 +256,7 @@ class plotter:
             return int(drawX), int(drawY)
         else:
             raise Exception('Projection method not choosen.')
+    """
 
     def plotData(self, dataDimension, dataString):
         # plot data
@@ -272,54 +276,9 @@ class plotter:
             dataColorMatrix[ti] = self._getPaintColor(uint16)
             si += 2
 
-        # prepare for the projection
-        w, h, r = self.projectionParams
-        imgBuffer = [0,] * (w + 1) * (h + 1)
-        latDelta = self.sourceRegionSize[0] / dataDimension[1]
-        lngDelta = self.sourceRegionSize[1] / dataDimension[0]
-        latDelta2 = latDelta / 2.0
-        lngDelta2 = lngDelta / 2.0
-
         # DEBUG
         imgBuffer = ''.join([chr(i) for i in dataColorMatrix])
-        img = Image.frombytes('L', (3000, 3000), imgBuffer)
-        img.show()
-        exit()
-
-
-        # projection by scanning dataColorMatrix and filling the color into
-        # imgBuffer
-        ci = 0
-        lat = self.sourceRegion[0] # north lat.
-        try:
-            for y in xrange(0, dataDimension[1]):
-                lng = self.sourceRegion[1] # west lng.
-                for x in xrange(0, dataDimension[0]):
-                    X1, Y1 = self.__project(lat + latDelta2, lng - lngDelta2)
-                    X2, Y2 = self.__project(lat - latDelta2, lng + lngDelta2)
-
-                    rectY = abs(Y2 - Y1) + 1
-                    rectX = abs(X2 - X1) + 1
-                    offset = Y1 * w + X1
-                    if offset < 0:
-                        continue
-                    for i in xrange(0, rectY):
-                        for j in xrange(0, rectX):
-                            imgBuffer[offset + j] = dataColorMatrix[ci]
-                        offset += w
-
-                    lng += lngDelta
-                    ci += 1
-                lat += latDelta
-        except:
-            print w, h, w*h, offset, j, ci
-            print X1, Y1, X2, Y2
-            print lat, lng
-            exit()
-                
-        imgBuffer = ''.join([chr(i) for i in imgBuffer])
-        img = Image.frombytes('L', (w, h), imgBuffer)
-
+        img = Image.frombytes('L', dataDimension, imgBuffer)
         img.show()
 
 if __name__ == '__main__':
@@ -328,7 +287,7 @@ if __name__ == '__main__':
     p = plotter()
     p.setConvertTable(convert)
     p.setSourceRegion(85.02, 59.98, -60.02, -154.98)
-    p.setProjection('mercator', 2000)
+#    p.setProjection('equirectangular', 2000)
     p.plotData((3000, 3000), source)
 
     exit()

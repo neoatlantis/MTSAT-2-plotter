@@ -349,7 +349,7 @@ class plotter:
                 drawCross(centerLat, centerLng, 16, (0,0,255))
         """
 
-    def packImage(self, img):
+    def packImage(self, img, **argv):
         font = ImageFont.truetype('font.ttf', 32)
         margin = 20
         w, h = img.size
@@ -396,7 +396,7 @@ class plotter:
         the GNU General Public License
         along with this program.  If not,
         see <http://www.gnu.org/licenses/>.
-        """ % (timestamp, ir)).strip().split('\n')
+        """ % (argv["timestamp"], argv["ir"])).strip().split('\n')
         
         for line in text:
             envDraw.text((envL, envT), line.strip(), font=font, fill="black")
@@ -424,7 +424,7 @@ if __name__ == '__main__':
     img = p.plotCoordinateLines(img)
 
     print "Packing image..."
-    img = p.packImage(img)
+    img = p.packImage(img, timestamp='201411181530', ir=1)
 
     img.save('output.png')
     exit()

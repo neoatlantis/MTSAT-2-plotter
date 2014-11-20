@@ -24,10 +24,6 @@ from plotconfig import cropLatN, cropLatS, cropLngDiffW, cropLngDiffE
 import shapefile
 ##############################################################################
 
-
-matrixW = 3000
-matrixH = 3000
-
 convert = """
 0:=330.06
 30:=327.69
@@ -245,10 +241,13 @@ class plotter:
         dataColorMatrix = [0,] * dataSize
         si, ti = 0, 0
         uint16 = 0
-        for ti in xrange(0, dataSize): # get color matrix from raw data
-            uint16 = (dataMatrix[si] << 8) + dataMatrix[si+1]
-            dataColorMatrix[ti] = self._getPaintColor(uint16)
-            si += 2
+        for percent in xrange(0, 100):
+            for j in xrange(0, dataSize / 100): # get color matrix from raw data
+                uint16 = (dataMatrix[si] << 8) + dataMatrix[si+1]
+                dataColorMatrix[ti] = self._getPaintColor(uint16)
+                si += 2
+                ti += 1
+            print "%d %%" % percent
 
         imgBuffer = ''.join([chr(i) for i in dataColorMatrix])
         img = Image.frombytes('L', self.dataDimension, imgBuffer)
@@ -372,7 +371,7 @@ class plotter:
         ===================================
 
         Timestamp: %s
-        IR: %d
+        Channel: %s
 
 
         This program is free software: you
@@ -396,7 +395,7 @@ class plotter:
         the GNU General Public License
         along with this program.  If not,
         see <http://www.gnu.org/licenses/>.
-        """ % (argv["timestamp"], argv["ir"])).strip().split('\n')
+        """ % (argv["timestamp"], argv["channel"])).strip().split('\n')
         
         for line in text:
             envDraw.text((envL, envT), line.strip(), font=font, fill="black")
@@ -431,7 +430,7 @@ if __name__ == '__main__':
                 
 
             
-
+"""
 ##############################################################################
 # grey image adjust
         #img = ImageOps.invert(img) // using new scale of color, not useful
@@ -447,7 +446,6 @@ img.paste(imgCrop, imgCropRegion)
 #contrastEnhancer = ImageEnhance.Contrast(img)
 #contrastEnhancer.enhance(10)
 
-"""
 # brightness enhancer
 brightnessEnhancer = ImageEnhance.Brightness(img)
 brightnessEnhancer.enhance(0.5)

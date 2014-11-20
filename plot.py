@@ -215,9 +215,9 @@ class plotter:
         # precalculated.
         return self.lookupTable[uint16]
 
-    def __getColorScale(self, Tbb):
+    def __getColorScale(self, value):
         minimal, maximal = self.colorScale
-        color = 255 - int((Tbb - minimal) / (maximal - minimal) * 255.0)
+        color = 255 - int((value - minimal) / (maximal - minimal) * 255.0)
         if color > 255:
             color = 255
         elif color < 0:
@@ -371,11 +371,21 @@ class plotter:
         timestamp += 'UTC'
 
         text = ("""
-        NeoAtlantis MTSAT-2 IR Data Plotter
+        NeoAtlantis MTSAT-2 Data Plotter
         ===================================
 
         Timestamp: %s
         Channel: %s
+
+        MTSAT gridded data are provided by
+        the Center for Environmental Remote 
+        Sensing, Chiba University and 
+        sponsored by the ``Formation of a 
+        virtual laboratory for diagnosing 
+        the earth's climate system'' the
+        Ministry of Science, Sports, and
+        Culture. Original image data was 
+        provided by JMA.
 
 
         This program is free software: you

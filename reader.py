@@ -63,7 +63,7 @@ for each in geossFile:
         1023:=100.00
         65535:=100.00
         """
-        p.setColorScale(-10, 100)
+        p.setColorScale(-5, 105)
         p.setConvertTable(visconv)
         p.setSourceRegion(59.995, 85.005, -60.005, -154.995)
         p.setDataDimension(12000, 12000)

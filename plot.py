@@ -423,7 +423,7 @@ class plotter:
         the GNU General Public License
         along with this program.  If not,
         see <http://www.gnu.org/licenses/>.
-        """ % (argv["timestamp"], argv["channel"], dataRegionDesc)
+        """ % (timestamp, argv["channel"], dataRegionDesc)
         text = text.strip().split('\n')
         
         for line in text:

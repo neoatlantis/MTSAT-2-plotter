@@ -4,6 +4,7 @@
 Reads the .tar.bzip file provided by offical FTP
 """
 
+import os
 import sys
 import tarfile
 from plot import plotter
@@ -13,6 +14,16 @@ try:
     tar = tarfile.open(sys.argv[1], 'r:bz2')
 except:
     sys.exit(1)
+
+try:
+    if len(sys.argv) >= 3:
+        outputPath = sys.argv[2]
+    else:
+        outputPath = '.'
+    outputPath = os.path.realpath(outputPath)
+except Exception,e:
+    print e
+    sys.exit(2)
 
 print "> Reading the content of tarball..."
 
@@ -82,8 +93,8 @@ for each in geossFile:
     print "> Plotting data..."
     img = p.plotData(source)
 
-    print "> Adding coastlines..."
-    img = p.plotCoastlines(img)
+    #print "> Adding coastlines..."
+    #img = p.plotCoastlines(img)
 
     print "> Adding coordinate lines..."
     img = p.plotCoordinateLines(img)
@@ -91,5 +102,5 @@ for each in geossFile:
     print "> Packing image..."
     img = p.packImage(img, timestamp=TIME, channel=CHANNEL)
 
-    img.save(filename)
+    img.save(os.path.join(outputPath, filename))
     print ">>> Image saved to: %s\n" % filename

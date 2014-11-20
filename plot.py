@@ -293,7 +293,7 @@ class plotter:
         imgR, imgG, imgB = imgColor.split()
         imgDraw = ImageDraw.Draw(imgG)
         latN, lngW, latS, lngE = self.sourceRegion
-        coastline = shapefile.Reader('coastline/ne_50m_coastline/ne_50m_coastline')
+        coastline = shapefile.Reader('coastline/ne_50m_coastline')
         for each in coastline.shapes():
             points = each.points
             if len(points) < 2:

@@ -76,7 +76,7 @@ for each in geossFile:
     p = plotter()
 
     if 'VIS' == CHANNEL:
-        p.setColorScale(-5, 105)
+        p.setColorScale(-5, 105, False)
         p.setConvertTable(convertTable)
         p.setSourceRegion(59.995, 85.005, -60.005, -154.995)
         p.setDataDimension(12000, 12000)

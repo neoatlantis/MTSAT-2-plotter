@@ -216,8 +216,8 @@ class plotter:
     def setDataResolution(self, latRes, lngRes):
         self.dataResolution = (latRes, lngRes) # deltaLat, deltaLng
 
-    def setColorScale(self, minimal, maximal):
-        self.colorScale = (minimal, maximal)
+    def setColorScale(self, minimal, maximal, inverted=True):
+        self.colorScale = (minimal, maximal, inverted)
 
     def _getPaintColor(self, uint16):
         # Convert the satellite result, which is Uint16, into Uint8 grey scale
@@ -226,8 +226,11 @@ class plotter:
         return self.lookupTable[uint16]
 
     def __getColorScale(self, value):
-        minimal, maximal = self.colorScale
-        color = 255 - int((value - minimal) / (maximal - minimal) * 255.0)
+        minimal, maximal, inverted = self.colorScale
+        if inverted:
+            color = 255 - int((value - minimal) / (maximal - minimal) * 255.0)
+        else:
+            color = int((value - minimal) / (maximal - minimal) * 255.0)
         if color > 255:
             color = 255
         elif color < 0:

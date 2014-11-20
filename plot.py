@@ -15,7 +15,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
+import array
 import math
 from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 
@@ -248,26 +248,20 @@ class plotter:
     def plotData(self, dataString):
         # plot data
         #   dataDimension := (X-points, Y-points), given by MTSAT-2
-
-        dataMatrix = [ord(i) for i in dataString]
+        dataColorMatrix = array.array('B')
         dataSize = self.dataDimension[0] * self.dataDimension[1]
-        if dataSize != len(dataMatrix) / 2:
+        if dataSize != len(dataString) / 2:
             raise Exception('Wrong data dimension specification.')
-        
-        # generate data color matrix
-        dataColorMatrix = [0,] * dataSize
-        si, ti = 0, 0
-        uint16 = 0
+
+        ri = 0
         for percent in xrange(0, 100):
-            for j in xrange(0, dataSize / 100): # get color matrix from raw data
-                uint16 = (dataMatrix[si] << 8) + dataMatrix[si+1]
-                dataColorMatrix[ti] = self._getPaintColor(uint16)
-                si += 2
-                ti += 1
+            for i in xrange(0, dataSize / 100):
+                uint16 = (ord(dataString[ri]) << 8) + ord(dataString[ri+1])
+                dataColorMatrix.append(self._getPaintColor(uint16))
+                ri += 2
             print "%d %%" % percent
 
-        imgBuffer = ''.join([chr(i) for i in dataColorMatrix])
-        imgGrey = Image.frombytes('L', self.dataDimension, imgBuffer)
+        imgGrey = Image.frombuffer('L', self.dataDimension, dataColorMatrix, 'raw', 'L', 0, 1)
 
         imgCrop = imgGrey.crop(self.effectiveRegion)
         imgCrop = ImageOps.equalize(imgCrop)

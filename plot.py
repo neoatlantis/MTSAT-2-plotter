@@ -175,7 +175,7 @@ class plotter:
         # Cache the tablized curve. A look up table from Uint16 to Color
         # Value(0-255) is calculated and cached.
         convert = convert.strip().split('\n')
-        curve = [tuple(i.split(':=')) for i in convert]
+        curve = [tuple(i.strip().split(':=')) for i in convert]
         curve = [(int(i), float(j)) for i,j in curve]
         curve = sorted(curve, key = lambda i:i[0])
 
@@ -206,6 +206,9 @@ class plotter:
     def setDataResolution(self, latRes, lngRes):
         self.dataResolution = (latRes, lngRes) # deltaLat, deltaLng
 
+    def setColorScale(self, minimal, maximal):
+        self.colorScale = (minimal, maximal)
+
     def _getPaintColor(self, uint16):
         # Convert the satellite result, which is Uint16, into Uint8 grey scale
         # color. This is done by simply looking up the lookup table
@@ -213,7 +216,8 @@ class plotter:
         return self.lookupTable[uint16]
 
     def __getColorScale(self, Tbb):
-        color = 255 - int((Tbb - 200) / (300 - 200) * 255.0)
+        minimal, maximal = self.colorScale
+        color = 255 - int((Tbb - minimal) / (maximal - minimal) * 255.0)
         if color > 255:
             color = 255
         elif color < 0:

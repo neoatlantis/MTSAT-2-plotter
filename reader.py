@@ -56,13 +56,21 @@ for each in geossFile:
 
     print "> Configuring plotter..."
     p = plotter()
-    p.setConvertTable(convert)
 
     if 'VIS' == CHANNEL:
+        visconv = """
+        0:=-0.10
+        1023:=100.00
+        65535:=100.00
+        """
+        p.setColorScale(-10, 100)
+        p.setConvertTable(visconv)
         p.setSourceRegion(59.995, 85.005, -60.005, -154.995)
         p.setDataDimension(12000, 12000)
         p.setDataResolution(0.01, 0.01)
     else:
+        p.setColorScale(200, 300)
+        p.setConvertTable(convert)
         p.setSourceRegion(59.98, 85.02, -60.02, -154.98)
         p.setDataDimension(3000, 3000)
         p.setDataResolution(0.04, 0.04)

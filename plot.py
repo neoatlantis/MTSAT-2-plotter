@@ -204,6 +204,7 @@ class plotter:
         self.dataDimension = (w, h)
 
     def setDK(self, dk):
+        self.dk = dk
         w, h = self.dataDimension
         if dk == '1':
             self.effectiveRegion = (0, 0, w, h)
@@ -384,12 +385,20 @@ class plotter:
         timestamp += time[8:10] + ':' + time[10:12] + ' '
         timestamp += 'UTC'
 
-        text = ("""
+        if self.dk == '1':
+            dataRegionDesc = "N+S Hemisphere"
+        elif self.dk == '2':
+            dataRegionDesc = "N Hemisphere"
+        else:
+            dataRegionDesc = "S Hemisphere"
+
+        text = """
         NeoAtlantis MTSAT-2 Data Plotter
         ===================================
 
         Timestamp: %s
         Channel: %s
+        Data Region: %s
 
         MTSAT gridded data are provided by
         the Center for Environmental Remote 
@@ -423,7 +432,8 @@ class plotter:
         the GNU General Public License
         along with this program.  If not,
         see <http://www.gnu.org/licenses/>.
-        """ % (argv["timestamp"], argv["channel"])).strip().split('\n')
+        """ % (argv["timestamp"], argv["channel"], dataRegionDesc)
+        text = text.strip().split('\n')
         
         for line in text:
             envDraw.text((envL, envT), line.strip(), font=font, fill="black")

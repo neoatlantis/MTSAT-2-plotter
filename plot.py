@@ -203,6 +203,15 @@ class plotter:
     def setDataDimension(self, w, h):
         self.dataDimension = (w, h)
 
+    def setDK(self, dk):
+        w, h = self.dataDimension
+        if dk == '1':
+            self.effectiveRegion = (0, 0, w, h)
+        elif dk == '2':
+            self.effectiveRegion = (0, 0, w, h / 2)
+        else:
+            self.effectiveRegion = (h/2, 0, w, h)
+
     def setDataResolution(self, latRes, lngRes):
         self.dataResolution = (latRes, lngRes) # deltaLat, deltaLng
 
@@ -254,8 +263,13 @@ class plotter:
             print "%d %%" % percent
 
         imgBuffer = ''.join([chr(i) for i in dataColorMatrix])
-        img = Image.frombytes('L', self.dataDimension, imgBuffer)
-        imgColor = Image.merge('RGB', (img, img, img))
+        imgGrey = Image.frombytes('L', self.dataDimension, imgBuffer)
+
+        imgCrop = imgGrey.crop(self.effectiveRegion)
+        imgCrop = ImageOps.equalize(imgCrop)
+        imgGrey.paste(imgCrop, self.effectiveRegion)
+
+        imgColor = Image.merge('RGB', (imgGrey, imgGrey, imgGrey))
         return imgColor
 
     def _lineColor(self, imgDraw, lat1, lng1, lat2, lng2, rgb, bold):

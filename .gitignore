@@ -1,4 +1,4 @@
 testdata
 *.sw?
 *.pyc
-output.png
+*.png

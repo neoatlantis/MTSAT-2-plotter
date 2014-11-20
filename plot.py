@@ -273,14 +273,14 @@ class plotter:
         imgColor = Image.merge('RGB', (imgGrey, imgGrey, imgGrey))
         return imgColor
 
-    def _lineColor(self, imgDraw, lat1, lng1, lat2, lng2, rgb, bold):
+    def _lineColor(self, imgDraw, lat1, lng1, lat2, lng2, color, bold):
         drawX1, drawY1 = self.__project(lat1, lng1)
         drawX2, drawY2 = self.__project(lat2, lng2)
-        imgDraw.line([(drawX1, drawY1), (drawX2, drawY2)], fill="rgb(%d,%d,%d)" % rgb, width=bold)
+        imgDraw.line([(drawX1, drawY1), (drawX2, drawY2)], fill=color, width=bold)
 
-    def _drawText(self, imgDraw, lat, lng, offsetX, offsetY, text, font):
+    def _drawText(self, imgDraw, lat, lng, offsetX, offsetY, text, font, color):
         drawX, drawY = self.__project(lat, lng)
-        imgDraw.text((drawX + offsetX, drawY + offsetY), str(text), font=font, fill="red")
+        imgDraw.text((drawX + offsetX, drawY + offsetY), str(text), font=font, fill=color)
 
     def _drawCross(self, lat, lng, size, color):
         global drawColor
@@ -289,45 +289,32 @@ class plotter:
         drawColor.line([(drawX - size, drawY), (drawX + size, drawY)], fill="rgb(%d,%d,%d)" % color, width = 2)
         drawColor.line([(drawX, drawY - size), (drawX, drawY + size)], fill="rgb(%d,%d,%d)" % color, width = 2)
 
-    def plotCoastlines(self, img):
-        imgDraw = ImageDraw.Draw(img)
+    def plotCoastlines(self, imgColor):
+        imgR, imgG, imgB = imgColor.split()
+        imgDraw = ImageDraw.Draw(imgG)
         latN, lngW, latS, lngE = self.sourceRegion
-        coastline = shapefile.Reader('coastline/ne_50m_coastline')
+        coastline = shapefile.Reader('coastline/ne_50m_coastline/ne_50m_coastline')
         for each in coastline.shapes():
             points = each.points
-            useLine = False
-            for lng, lat in points:
-                if latN < abs(lat):
-                    continue
-                if lng >= 0:
-                    if lng < lngW:
-                        continue
-                else:
-                    if lng + 360 > lngW + 180:
-                        continue
-                useLine = True
-            if useLine:
-                start = False
-                lastLng, lastLat = 0, 0
-                curLng, curLat = 0, 0
-                for lng, lat in points:
-                    curLng, curLat = lng, lat
-                    if start:
-                        self._lineColor(imgDraw, lastLat, lastLng, curLat, curLng, (255, 0, 255), 1)
-                    else:
-                        start = True
-                    lastLng, lastLat = curLng, curLat
+            if len(points) < 2:
+                continue
+            lastLng, lastLat = points[0]
+            for lng, lat in points[1:]:
+                self._lineColor(imgDraw, lastLat, lastLng, lat, lng, 255, 2)
+                lastLng, lastLat = lng, lat
+        img = Image.merge('RGB', (imgR, imgG, imgB))
         return img
 
-    def plotCoordinateLines(self, img):
-        imgDraw = ImageDraw.Draw(img)
+    def plotCoordinateLines(self, imgColor):
+        imgR, imgG, imgB = imgColor.split()
+        imgDraw = ImageDraw.Draw(imgR)
         font = ImageFont.truetype('font.ttf', 32)
         
         latN, lngW, latS, lngE = self.sourceRegion
         latHeight, lngWidth = self.sourceRegionSize
 
         for lat in xrange(-60, 61, 15):
-            self._lineColor(imgDraw, lat, lngW, lat, lngW + lngWidth, (255,0,0), 2)
+            self._lineColor(imgDraw, lat, lngW, lat, lngW + lngWidth, 255, 3)
             if lat > 0:
                 strlat = str(lat) + 'N'
             elif lat < 0:
@@ -335,17 +322,18 @@ class plotter:
             else:
                 strlat = 'EQUATOR'
             textW, textH = font.getsize(strlat)
-            self._drawText(imgDraw, lat, lngW, 2, -textH-5, strlat, font)
+            self._drawText(imgDraw, lat, lngW, 2, -textH-5, strlat, font, 255)
 
         for lng in xrange(60, 300, 15):
-            self._lineColor(imgDraw, latS, lng, latN, lng, (255, 0, 0), 2)
+            self._lineColor(imgDraw, latS, lng, latN, lng, 255, 3)
             if lng > 180:
                 strlng = str(360 - lng) + 'W'
             else:
                 strlng = str(lng) + 'E'
             textW, textH = font.getsize(strlng)
-            self._drawText(imgDraw, 0, lng, -textW-2, 2, strlng, font)
-
+            self._drawText(imgDraw, 0, lng, -textW-2, 2, strlng, font, 255)
+        
+        img = Image.merge('RGB', (imgR, imgG, imgB))
         return img
 
         """
@@ -446,9 +434,11 @@ if __name__ == '__main__':
     source = open('testdata/sample.geoss', 'r').read()
 
     p = plotter()
+    p.setColorScale(200, 300)
     p.setConvertTable(convert)
     p.setSourceRegion(59.98, 85.02, -60.02, -154.98)
     p.setDataDimension(3000, 3000)
+    p.setDK('1')
     p.setDataResolution(0.04, 0.04)
 
     print "Plotting data..."
@@ -461,7 +451,7 @@ if __name__ == '__main__':
     img = p.plotCoordinateLines(img)
 
     print "Packing image..."
-    img = p.packImage(img, timestamp='201411181530', ir=1)
+    img = p.packImage(img, timestamp='201411181530', channel='IR1')
 
     img.save('output.png')
     exit()

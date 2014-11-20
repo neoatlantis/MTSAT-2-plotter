@@ -1,4 +1,3 @@
-
 """
 shapefile.py
 Provides read and write support for ESRI Shapefiles.

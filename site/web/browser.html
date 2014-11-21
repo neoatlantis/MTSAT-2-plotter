@@ -3,10 +3,32 @@
 <head>
     <meta charset="utf-8" />
     <title>MTSAT-2 数据浏览器</title>
-    <script src="./jquery.js"></script>
+    <script src="./static/jquery.js"></script>
+    <script src="./static/jquery-ui/jquery-ui.min.js"></script>
     <script src="./browser.js"></script>
+
+    <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.min.css" />
+    <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.structure.min.css" />
+    <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.theme.min.css" />
+
+    <style> 
+        .hidden{display: none;}
+    </style>
 </head>
 <body>
-    
+    <div class="hidden">
+        <div id="imgCache">
+        </div>
+    </div>
+
+    <div id="interface">
+        <div>
+            日期选择：
+            <input type="text" name="view-date-range-start" placeholder="YYYYMMDD" maxlength="8" size="8"/>
+            到
+            <input type="text" name="view-date-range-end" placeholder="YYYYMMDD" maxlength="8" size="8"/>
+
+        </div>
+    </div>
 </body>
 </html>

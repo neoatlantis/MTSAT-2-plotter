@@ -7,7 +7,7 @@ function validateDateFormat(s){
         month = parseInt(s.slice(4,6), 10),
         day = parseInt(s.slice(6, 8));
     if(year < 2014) return false;
-    if(month < 1 or month > 12) return false;
+    if(month < 1 || month > 12) return false;
     if(day < 1) return false;
 
     var dayMax = 0;
@@ -27,7 +27,7 @@ function validateDateFormat(s){
     return [year, month, day]; 
 };
 
-function compareDate(a, b){
+function compareDate(a, b){ // if a<b
     var year1 = parseInt(a.slice(0,4), 10),
         month1 = parseInt(a.slice(4,6), 10),
         day1 = parseInt(a.slice(6, 8));
@@ -45,14 +45,10 @@ function compareDate(a, b){
             if(day1 > day2)
                 aBigger = true;
 
-    if(aBigger)
-        return [[year2, month2, day2], [year1, month1, day1]];
-    else
-        return [[year1, month1, day1], [year2, month2, day2]];
-    // returns the smaller, then the bigger
+    return !aBigger;
 };
 
-/* Load satellite data from given filename */
+/* Get satellite image from given filename */
 var loadDataCache = {}
 var loadData = function(filename, callback){
     if(!/^[0-9]{12}\.((IR[1-4])|VIS)\.(FULL|NORTH|SOUTH)\.png$/.test(filename))
@@ -65,7 +61,7 @@ var loadData = function(filename, callback){
     ;
 
     if(undefined !== loadDataCache[filename]){
-        
+        callback(img);        
     } else {
         var img = new Image();
         img.src = url;
@@ -78,6 +74,7 @@ var loadData = function(filename, callback){
                 loadDataCache[filename] = false;
             else
                 loadDataCache[filename] = img;
+            callback(loadDataCache[filename]);
         };
     };
 };
@@ -87,15 +84,42 @@ var loadData = function(filename, callback){
 /* initialize interface */
 
 function validateDateRange(){
-    var viewDateRangeStart = $('[name="view-date-range-start"]').text(),
-        viewDateRangeEnd = $('[name="view-date-range-end"]').text();
+    var viewDateRangeStart = $('[name="view-date-range-start"]').val(),
+        viewDateRangeEnd = $('[name="view-date-range-end"]').val();
     
-    if(!(
-        validateDateFormat(viewDateRangeStart) && 
-        validateDateFormat(viewDateRangeEnd))
+    if(
+        false === validateDateFormat(viewDateRangeStart) ||
+        false === validateDateFormat(viewDateRangeEnd)
     )
         return false;
+
+    if(!compareDate(viewDateRangeStart, viewDateRangeEnd))
+        return false;
+
+    if(!compareDate('20141119', viewDateRangeStart))
+        return false;
+
+    var nowtime = new Date(), nowtimeStr = '', nowtimeY, nowtimeM, nowtimeD;
+    nowtimeY = nowtime.getUTCFullYear();
+    nowtimeM = nowtime.getUTCMonth() + 1;
+    nowtimeD = nowtime.getUTCDate();
+    
+    nowtimeStr = String(nowtimeY);
+    if(nowtimeM < 10) nowtimeStr += '0';
+    nowtimeStr += String(nowtimeM);
+    if(nowtimeD < 10) nowtimeStr += '0';
+    nowtimeStr += String(nowtimeD);
+
+    if(!compareDate(viewDateRangeEnd, nowtimeStr))
+        return false;
+
+    return true;
 };
+
+$('#choose-date-range').click(function(){
+    if(false === validateDateRange())
+        return alert('输入的日期范围有误。');
+});
 
 //////////////////////////////////////////////////////////////////////////////
 });

@@ -25,6 +25,7 @@ try:
             logFilePath = False
     else:
         outputPath = '.'
+        logFilePath = False
     outputPath = os.path.realpath(outputPath)
 except Exception,e:
     print e

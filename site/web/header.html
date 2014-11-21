@@ -7,7 +7,20 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 
         <title>MTSAT-2 卫星图像 - NeoAtlantis应用科学和神秘学实验室</title>
-        <script src="/scripts/jquery.js"></script>
+        <script src="//neoatlantis.org/scripts/jquery.js"></script>
+
+        <script>
+            $(function(){
+                var pathstr = $('#title').text().trim();
+                var paths = pathstr.split('/').slice(1,-1);
+                var output = '当前位置：<a href="/">根目录</a> &gt; ';
+                for(var i=0; i<paths.length; i++){
+                    output += '<a href="/' + paths.slice(0, i+1).join('/') + '">' + paths[i] + '</a> &gt; ';
+                };
+                output += '文件列表';
+                $('#title').html(output);
+            });
+        </script>
 
         <!-- Custom CSS -->
         <link rel="stylesheet" href="//neoatlantis.org/css/main.css" />
@@ -27,4 +40,4 @@
     <div class="site banner"></div>
 
     <div class="site post">
-    <h1 class="article-title">当前位置：
+    <h1 id="title" class="article-title">

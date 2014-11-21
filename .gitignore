@@ -2,6 +2,6 @@ testdata
 *.sw?
 *.pyc
 *.png
-mirror
 ftpcopy
 site/data
+site/mirror

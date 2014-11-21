@@ -23,7 +23,7 @@ try:
         if each.endswith('.tar.bz2'):
             mirrorList.append(each)
 
-    outputPathBase = os.path.join(currentPath, 'result', DATEMONTH)
+    outputPathBase = os.path.join(currentPath, 'site', 'data', DATEMONTH)
 except:
     exit(1)
 

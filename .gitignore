@@ -4,4 +4,4 @@ testdata
 *.png
 mirror
 ftpcopy
-result
+site/data

@@ -8,10 +8,10 @@ echo "Sync MTSAT-2 IR data for month $_DATEMONTH ..."
 # delete mirror and result files that are too old
 echo "Removing files that are old..."
 find ./mirror -type f  -mtime +2 -exec rm -rf {} \;
-find ./result -type f -path "*.png" -mtime +7 -exec rm -rf {} \;
+find ./site/data -type f -mtime +7 -exec rm -rf {} \;
 
 # create mirror/<date> and result/<date> for storing data
-mkdir -p mirror/$_DATEMONTH result/$_DATEMONTH
+mkdir -p mirror/$_DATEMONTH site/data/$_DATEMONTH
 
 # call the `ftpcopy` command to synchronize the files
 #   --dry-run       for testing purposes

@@ -6,6 +6,7 @@ Reads the .tar.bzip file provided by offical FTP
 
 import os
 import sys
+import time
 import tarfile
 from plot import plotter
 from headerFileReader import extractConvertTable
@@ -18,6 +19,10 @@ except:
 try:
     if len(sys.argv) >= 3:
         outputPath = sys.argv[2]
+        if len(sys.argv) >= 4:
+            logFilePath = os.path.realpath(sys.argv[3])
+        else:
+            logFilePath = False
     else:
         outputPath = '.'
     outputPath = os.path.realpath(outputPath)
@@ -100,7 +105,13 @@ for each in geossFile:
     img = p.plotCoordinateLines(img)
 
     print "> Packing image..."
-    img = p.packImage(img, timestamp=TIME, channel=CHANNEL)
+    img, imgDataRegion = p.packImage(img, timestamp=TIME, channel=CHANNEL)
 
     img.save(os.path.join(outputPath, filename))
     print ">>> Image saved to: %s\n" % filename
+
+    if logFilePath != False:
+        logStr = '\t'.join([filename, str(time.time()), str(imgDataRegion)])
+        logStr += '\n'
+        open(logFilePath, 'a+').write(logStr)
+        print ">>> Log to [%s]: %s" % (logFilePath, logStr)

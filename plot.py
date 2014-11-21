@@ -220,7 +220,8 @@ class plotter:
         imgEnv = Image.new('RGB', (w + 700 + 2 * margin, h + 2 * margin), 'rgb(100,100,100)')
         imgCrop = img.crop((0, 0, w, h))
 
-        imgEnv.paste(imgCrop, (margin, margin, margin + w, margin + h))
+        imgDataRegion = (margin, margin, margin + w, margin + h)
+        imgEnv.paste(imgCrop, imgDataRegion)
 
         envDraw = ImageDraw.Draw(imgEnv)
         envT = margin
@@ -286,7 +287,7 @@ class plotter:
             envDraw.text((envL, envT), line.strip(), font=font, fill="black")
             envT += textH * 1.5
         
-        return imgEnv
+        return imgEnv, imgDataRegion
 
 
 if __name__ == '__main__':

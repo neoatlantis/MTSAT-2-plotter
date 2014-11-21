@@ -24,6 +24,7 @@ try:
             mirrorList.append(each)
 
     outputPathBase = os.path.join(currentPath, 'site', 'data', DATEMONTH)
+    logFilePath = os.path.join(outputPathBase, 'log.txt')
 except:
     exit(1)
 
@@ -34,7 +35,7 @@ for each in mirrorList:
         mirrorPath = os.path.join(mirrorPathBase, each)
 
         print "Treating tarball [%s], saving to [%s]..." % (mirrorPath, outputPath)
-        subprocess.call(['python', 'reader.py', mirrorPath, outputPath])
+        subprocess.call(['python', 'reader.py', mirrorPath, outputPath, logFilePath])
 
         nowTime = time.time()
         if nowTime - startTime > 600:

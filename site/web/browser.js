@@ -84,24 +84,64 @@ var loadData = function(filename, callback){
 };
 
 
-/* Retrive index file (log.txt) and parse */
-var indexFileCache = {};
+/* Retrive index file (log.txt) and auto parse */
+var indexFileCache = {}, dateFileMetadata = {};
 function loadIndexFile(dateMonth, callback){
+    function parser(s){
+        var sp = s.split('\n'), lp, range, filename, filenameS;
+        for(var i in sp){
+            if(!sp[i]) continue;
+            lp = sp[i].trim().split('\t');
+            range = lp[2].trim().slice(1,-1).split(',');
+            filename = lp[0].trim();
+            filenameS = filename.split('.');
+            dateFileMetadata[filename] = {
+                'time': filenameS[0],
+                'date': filenameS[0].slice(0, 8),
+                'dateMonth': filenameS[0].slice(0, 6),
+                'channel': filenameS[1],
+                'south': 'FULL' == filenameS[2] || 'SOUTH' == filenameS[2],
+                'north': 'FULL' == filenameS[2] || 'NORTH' == filenameS[2],
+                'range': {
+                    x1: range[0],
+                    y1: range[1],
+                    x2: range[2],
+                    y2: range[3],
+                }
+            };
+        };
+    };
     if(undefined !== indexFileCache[dateMonth]){
-        callback(indexFileCache[dateMonth]);
+        parser(indexFileCache[dateMonth]);
+        callback();
     } else {
         $.get(
             'http://mtsat-2.neoatlantis.org/data/' + dateMonth + '/log.txt',
             function(s){
                 indexFileCache[dateMonth] = s;
-                callback(s);
+                parser(s);
+                callback();
             }
         );
     };
 };
 
-
 //////////////////////////////////////////////////////////////////////////////
+
+/* filter date list */
+
+var dateFilterStart, dateFilterEnd;
+function filterDateList(){
+    // the filter updates the list in UI by given start and end.  date list
+    // being filtered(`dateFileMetadata`) is maintained by 'loadIndexFile'
+    // function.
+    
+    for(var filename in dateFileMetadata){
+        var metadata = dateFileMetadata[filename];
+        $('body').append(JSON.stringify(metadata));
+    };
+};
+
 
 /* initialize interface */
 
@@ -147,6 +187,11 @@ $('#choose-date-range').click(function(){
         return alert('输入的日期范围有误。起始日期必须早于终止日期，且不早于2014年11月19日; 终止日期不得晚于今日。');
 
     var year = dateRange[0][0], month = dateRange[0][1];
+
+    // set date filter range
+    dateFilterStart = dateRange[2]; // str
+    dateFilterEnd = dateRange[3]; // str
+
     function toDateMonth(year, month){
         return String(year) + ((month < 10)?('0' + String(month)):String(month));
     };
@@ -160,15 +205,8 @@ $('#choose-date-range').click(function(){
         list.push(toDateMonth(year, month));
     };
 
-    for(var i=0; i<list.length; i++){
-        loadIndexFile(list[i], function(s){
-            if(!s) return;
-            s = s.split('\n');
-            for(var j in s){
-                $('body').append($('<div>').text(s[j]));
-            };
-        });
-    };
+    for(var i=0; i<list.length; i++)
+        loadIndexFile(list[i], filterDateList);
 });
 
 //////////////////////////////////////////////////////////////////////////////

@@ -32,10 +32,14 @@ function validateDateFormat(s){
 function compareDate(a, b){ // if a<=b
     var year1 = parseInt(a.slice(0,4), 10),
         month1 = parseInt(a.slice(4,6), 10),
-        day1 = parseInt(a.slice(6, 8));
+        day1 = parseInt(a.slice(6, 8)),
+        hour1 = parseInt(a.slice(8, 10)),
+        minute1 = parseInt(a.slice(10, 12));
     var year2 = parseInt(b.slice(0,4), 10),
         month2 = parseInt(b.slice(4,6), 10),
-        day2 = parseInt(b.slice(6, 8));
+        day2 = parseInt(b.slice(6, 8)),
+        hour2 = parseInt(b.slice(8, 10)),
+        minute2 = parseInt(b.slice(10, 12));
 
     var aBigger = false;
     if(year1 > year2)
@@ -46,6 +50,12 @@ function compareDate(a, b){ // if a<=b
         else if(month1 == month2)
             if(day1 > day2)
                 aBigger = true;
+            else if(day1 == day2)
+                if(hour1 > hour2)
+                    aBigger = true;
+                else if(hour1 == hour2)
+                    if (minute1 > minute2)
+                        aBigger = true;
 
     return !aBigger;
 };
@@ -155,12 +165,22 @@ function filterDateList(){
     };
 
     list.sort(function(a,b){
-        return compareDate(a.date, b.date);
+        return compareDate(a.time, b.time);
     });
 
     for(var i in list){
+        var display = list[i].time.slice(0,4) + '-'
+                    + list[i].time.slice(4,6) + '-'
+                    + list[i].time.slice(6,8)
+                    + '<font color="#999">T</font>'
+                    + list[i].time.slice(8, 10) + ':'
+                    + list[i].time.slice(10,12)
+                    + '<font color="#999">Z</font>'
+        ;
         $('[name="data-list"]').append(
-            $('<div>').text(list[i].time)
+            $('<div>').append(
+                $('<button>').html(display).addClass('button-date')
+            )
         );
     };
 };

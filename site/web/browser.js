@@ -1,6 +1,8 @@
 $(function(){
 //////////////////////////////////////////////////////////////////////////////
 
+/* Date concerning functions */
+
 function validateDateFormat(s){
     if(!/^[0-9]{8}$/.test(s)) return false;
     var year = parseInt(s.slice(0,4), 10),
@@ -27,7 +29,7 @@ function validateDateFormat(s){
     return [year, month, day]; 
 };
 
-function compareDate(a, b){ // if a<b
+function compareDate(a, b){ // if a<=b
     var year1 = parseInt(a.slice(0,4), 10),
         month1 = parseInt(a.slice(4,6), 10),
         day1 = parseInt(a.slice(6, 8));
@@ -48,7 +50,9 @@ function compareDate(a, b){ // if a<b
     return !aBigger;
 };
 
+
 /* Get satellite image from given filename */
+
 var loadDataCache = {}
 var loadData = function(filename, callback){
     if(!/^[0-9]{12}\.((IR[1-4])|VIS)\.(FULL|NORTH|SOUTH)\.png$/.test(filename))
@@ -80,17 +84,36 @@ var loadData = function(filename, callback){
 };
 
 
+/* Retrive index file (log.txt) and parse */
+var indexFileCache = {};
+function loadIndexFile(dateMonth, callback){
+    if(undefined !== indexFileCache[dateMonth]){
+        callback(indexFileCache[dateMonth]);
+    } else {
+        $.get(
+            'http://mtsat-2.neoatlantis.org/data/' + dateMonth + '/log.txt',
+            function(s){
+                indexFileCache[dateMonth] = s;
+                callback(s);
+            }
+        );
+    };
+};
+
+
+//////////////////////////////////////////////////////////////////////////////
 
 /* initialize interface */
 
 function validateDateRange(){
     var viewDateRangeStart = $('[name="view-date-range-start"]').val(),
         viewDateRangeEnd = $('[name="view-date-range-end"]').val();
+
+    // if validation passed, they will be numbers taken apart [YYYY, MM, DD]
+    var dateRangeStart = validateDateFormat(viewDateRangeStart),
+        dateRangeEnd = validateDateFormat(viewDateRangeEnd);
     
-    if(
-        false === validateDateFormat(viewDateRangeStart) ||
-        false === validateDateFormat(viewDateRangeEnd)
-    )
+    if(false === dateRangeStart || false === dateRangeEnd)
         return false;
 
     if(!compareDate(viewDateRangeStart, viewDateRangeEnd))
@@ -113,12 +136,39 @@ function validateDateRange(){
     if(!compareDate(viewDateRangeEnd, nowtimeStr))
         return false;
 
-    return true;
+    // [[YYYY, MM, DD], [YYYY, MM, DD], 'YYYYMMDD', 'YYYYMMDD']
+    return [dateRangeStart, dateRangeEnd, viewDateRangeStart, viewDateRangeEnd];
 };
 
+
 $('#choose-date-range').click(function(){
-    if(false === validateDateRange())
-        return alert('输入的日期范围有误。');
+    var dateRange = validateDateRange();
+    if(false === dateRange)
+        return alert('输入的日期范围有误。起始日期必须早于终止日期，且不早于2014年11月19日; 终止日期不得晚于今日。');
+
+    var year = dateRange[0][0], month = dateRange[0][1];
+    function toDateMonth(year, month){
+        return String(year) + ((month < 10)?('0' + String(month)):String(month));
+    };
+    var list = [toDateMonth(year, month)];
+    while(year != dateRange[1][0] && month != dateRange[1][1]){
+        month += 1;
+        if(month > 12){
+            month = 1;
+            year += 1;
+        };
+        list.push(toDateMonth(year, month));
+    };
+
+    for(var i=0; i<list.length; i++){
+        loadIndexFile(list[i], function(s){
+            if(!s) return;
+            s = s.split('\n');
+            for(var j in s){
+                $('body').append($('<div>').text(s[j]));
+            };
+        });
+    };
 });
 
 //////////////////////////////////////////////////////////////////////////////

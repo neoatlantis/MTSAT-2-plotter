@@ -130,22 +130,38 @@ function loadIndexFile(dateMonth, callback){
 
 /* filter date list */
 
-var dateFilterStart, dateFilterEnd;
+var dataFilterStart, dataFilterEnd, dataFilterChannel;
 function filterDateList(){
     // the filter updates the list in UI by given start and end.  date list
     // being filtered(`dateFileMetadata`) is maintained by 'loadIndexFile'
     // function.
     
+    // append to list
+    $('[name="data-list"]').empty();
+    var list = [];
+    
     for(var filename in dateFileMetadata){
         var metadata = dateFileMetadata[filename];
         if(!(
-            compareDate(dateFilterStart, metadata.date) &&
-            compareDate(metadata.date, dateFilterEnd)
+            compareDate(dataFilterStart, metadata.date) &&
+            compareDate(metadata.date, dataFilterEnd)
         ))
             continue;
 
-        // append to list
-        $('body').append(JSON.stringify(metadata));
+        if(metadata.channel != dataFilterChannel)
+            continue;
+
+        list.push(metadata);
+    };
+
+    list.sort(function(a,b){
+        return compareDate(a.date, b.date);
+    });
+
+    for(var i in list){
+        $('[name="data-list"]').append(
+            $('<div>').text(list[i].time)
+        );
     };
 };
 
@@ -196,8 +212,9 @@ $('#choose-date-range').click(function(){
     var year = dateRange[0][0], month = dateRange[0][1];
 
     // set date filter range
-    dateFilterStart = dateRange[2]; // str
-    dateFilterEnd = dateRange[3]; // str
+    dataFilterStart = dateRange[2]; // str
+    dataFilterEnd = dateRange[3]; // str
+    dataFilterChannel = $('[name="view-channel"]').val(); // str
 
     function toDateMonth(year, month){
         return String(year) + ((month < 10)?('0' + String(month)):String(month));

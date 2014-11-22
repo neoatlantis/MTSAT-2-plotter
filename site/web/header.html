@@ -19,6 +19,25 @@
                 };
                 output += '文件列表';
                 $('#title').html(output);
+
+                setInterval(function(){
+                    var nowtime = new Date();
+                    var str = '基于您的计算机，当前的UTC时间为：';
+
+                    function s2(s){
+                        if(s<10) return '0' + String(s);
+                        else return String(s);
+                    };
+
+                    str += nowtime.getUTCFullYear() + '年';
+                    str += s2(nowtime.getUTCMonth() + 1) + '月';
+                    str += s2(nowtime.getUTCDate()) + '日';
+                    str += s2(nowtime.getUTCHours()) + '时';
+                    str += s2(nowtime.getUTCMinutes()) + '分';
+                    str += s2(nowtime.getUTCSeconds()) + '秒';
+
+                    $('#UTC-time').text(str);
+                }, 100);
             });
         </script>
 
@@ -40,4 +59,7 @@
     <div class="site banner"></div>
 
     <div class="site post">
+
+    <p align="center" id="UTC-time">UTC时间</p>
+
     <h1 id="title" class="article-title">

@@ -138,6 +138,13 @@ function filterDateList(){
     
     for(var filename in dateFileMetadata){
         var metadata = dateFileMetadata[filename];
+        if(!(
+            compareDate(dateFilterStart, metadata.date) &&
+            compareDate(metadata.date, dateFilterEnd)
+        ))
+            continue;
+
+        // append to list
         $('body').append(JSON.stringify(metadata));
     };
 };

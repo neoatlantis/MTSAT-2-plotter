@@ -150,8 +150,6 @@ function showCloudAtlas(filename){
     if(!metadata) return alert('无数据。');
 
     loadData(filename, function(img){
-        console.log(img)
-        $(img).appendTo('body')
     });
 };
 

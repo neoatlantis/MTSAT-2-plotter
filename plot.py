@@ -40,6 +40,16 @@ class plotter:
         curve = [(int(i), float(j)) for i,j in curve]
         curve = sorted(curve, key = lambda i:i[0])
 
+        # get curve Y range
+        curveYMax = -99999
+        curveYMin = 99999
+        for x,y in curve:
+            if y > curveYMax:
+                curveYMax = y
+            if y < curveYMin:
+                curveYMin = y
+        self.colorScaleRange = curveYMin, curveYMax
+
         tableSize = 65536 # TODO use the size from curve
         self.lookupTable = [0,] * tableSize
 
@@ -52,7 +62,7 @@ class plotter:
             value = 1.0 * (x - left[0]) / (right[0] - left[0])
             value *= (right[1] - left[1])
             value += left[1]
-            self.lookupTable[x] = self.__getColorScale(value)
+            self.lookupTable[x] = self.__getGreyScale(value)
 
     def setSourceRegion(self, srcLatN, srcLngW, srcLatS, srcLngE):
         self.sourceRegion = (srcLatN, srcLngW, srcLatS, srcLngE)
@@ -77,8 +87,9 @@ class plotter:
     def setDataResolution(self, latRes, lngRes):
         self.dataResolution = (latRes, lngRes) # deltaLat, deltaLng
 
-    def setColorScale(self, minimal, maximal, inverted=True):
-        self.colorScale = (minimal, maximal, inverted)
+    def setScaleParameters(self, inverted, unit):
+        self.colorScaleInverted = inverted
+        self.colorScaleUnit = unit
 
     def _getPaintColor(self, uint16):
         # Convert the satellite result, which is Uint16, into Uint8 grey scale
@@ -86,8 +97,9 @@ class plotter:
         # precalculated.
         return self.lookupTable[uint16]
 
-    def __getColorScale(self, value):
-        minimal, maximal, inverted = self.colorScale
+    def __getGreyScale(self, value):
+        inverted = self.colorScaleInverted
+        minimal, maximal = self.colorScaleRange
         if inverted:
             color = 255 - int((value - minimal) / (maximal - minimal) * 255.0)
         else:
@@ -97,6 +109,15 @@ class plotter:
         elif color < 0:
             color = 0
         return color
+
+    def __getPhysicalValue(self, greyScale):
+        inverted = self.colorScaleInverted
+        minimal, maximal = self.colorScaleRange
+        if inverted:
+            value = (1 - greyScale / 255.0) * (maximal - minimal) + minimal
+        else:
+            value = (greyScale / 255.0) * (maximal - minimal) + minimal
+        return value
 
     def __project(self, lat, lng):
         if lng < 0:
@@ -115,12 +136,26 @@ class plotter:
             raise Exception('Wrong data dimension specification.')
 
         ri = 0
+        maxGrey, minGrey = 0, 9999
         for percent in xrange(0, 100):
             for i in xrange(0, dataSize / 100):
                 uint16 = (ord(dataString[ri]) << 8) + ord(dataString[ri+1])
-                dataColorMatrix.append(self._getPaintColor(uint16))
+                greyScale = self._getPaintColor(uint16)
+                dataColorMatrix.append(greyScale)
+                if greyScale > maxGrey:
+                    maxGrey = greyScale 
+                elif greyScale < minGrey:
+                    minGrey = greyScale 
                 ri += 2
             print "%d %%" % percent
+        
+        # maxGrey and minGrey are color grey extreme scales that are actually
+        # drawn on the map.
+
+        maxPhysicalValue = self.__getPhysicalValue(maxGrey)
+        minPhysicalValue = self.__getPhysicalValue(minGrey)
+
+        # form the data map
 
         imgGrey = Image.frombuffer('L', self.dataDimension, dataColorMatrix, 'raw', 'L', 0, 1)
 
@@ -129,7 +164,9 @@ class plotter:
         imgGrey.paste(imgCrop, self.effectiveRegion)
 
         imgColor = Image.merge('RGB', (imgGrey, imgGrey, imgGrey))
-        return imgColor
+
+        # imgColor, imgColorScaleInfo(minPhy, maxPhy)
+        return imgColor, (minPhysicalValue, maxPhysicalValue)
 
     def _lineColor(self, imgDraw, lat1, lng1, lat2, lng2, color, bold):
         drawX1, drawY1 = self.__project(lat1, lng1)
@@ -217,16 +254,17 @@ class plotter:
         font = ImageFont.truetype('font.ttf', 32)
         margin = 20
         w, h = img.size
-        imgEnv = Image.new('RGB', (w + 700 + 2 * margin, h + 2 * margin), 'rgb(100,100,100)')
+        imgEnvSize = (w + 700 + 2 * margin, h + 2 * margin)
+        imgEnv = Image.new('RGB', imgEnvSize, 'rgb(100,100,255)')
         imgCrop = img.crop((0, 0, w, h))
+        envDraw = ImageDraw.Draw(imgEnv)
 
         imgDataRegion = (margin, margin, margin + w, margin + h)
         imgEnv.paste(imgCrop, imgDataRegion)
 
-        envDraw = ImageDraw.Draw(imgEnv)
         envT = margin
         envL = w + margin * 2
-        textH = font.getsize('X')[1]
+        textW, textH = font.getsize('X')
 
         time = argv["timestamp"]
         timestamp = time[0:4] + '-' + time[4:6] + '-' + time[6:8] + ' '
@@ -286,7 +324,52 @@ class plotter:
         for line in text:
             envDraw.text((envL, envT), line.strip(), font=font, fill="black")
             envT += textH * 1.5
-        
+
+        if argv["scale"]:
+            imgScaleBarW, imgScaleBarH = 200, 1024
+            imgScaleBar = Image.new('RGB', (imgScaleBarW, imgScaleBarH))
+            imgScaleBarDraw = ImageDraw.Draw(imgScaleBar)
+            for i in xrange(0, imgScaleBarH):
+                fill = int(i * 255.0 / imgScaleBarH)
+                fill = "rgb(%d,%d,%d)" % (fill, fill, fill)
+                imgScaleBarDraw.line([(0, i), (imgScaleBarW, i)], fill=fill, width=1)
+            imgScaleBarLT = (\
+                w + margin * 2,
+                imgEnvSize[1] - margin - imgScaleBarH
+            )
+            imgScaleBarRegion = (\
+                imgScaleBarLT[0],
+                imgScaleBarLT[1],
+                imgScaleBarLT[0] + imgScaleBarW,
+                imgScaleBarLT[1] + imgScaleBarH
+            )
+            imgEnv.paste(imgScaleBar, imgScaleBarRegion)
+
+            # left top of the text area
+            textLT = (\
+                imgScaleBarLT[0] + imgScaleBarW + textW,
+                imgScaleBarLT[1]
+            )
+
+            # text min value
+            minValue = "%-5.2f %s" % (argv["scale"][0], self.colorScaleUnit)
+            envDraw.text(\
+                (textLT[0], imgScaleBarLT[1]),
+                minValue,
+                font=font,
+                fill="black"
+            )
+
+            # text max value
+            maxValue = "%-5.2f %s" % (argv["scale"][1], self.colorScaleUnit)
+            envDraw.text(\
+                (textLT[0], textLT[1] + imgScaleBarH - textH),
+                maxValue,
+                font=font,
+                fill="black"
+            )
+                
+        # done
         return imgEnv, imgDataRegion
 
 
@@ -430,7 +513,7 @@ if __name__ == '__main__':
     source = open('testdata/sample.geoss', 'r').read()
 
     p = plotter()
-    p.setColorScale(200, 300)
+    p.setScaleParameters(True, 'K')
     p.setConvertTable(convert)
     p.setSourceRegion(59.98, 85.02, -60.02, -154.98)
     p.setDataDimension(3000, 3000)
@@ -438,16 +521,16 @@ if __name__ == '__main__':
     p.setDataResolution(0.04, 0.04)
 
     print "Plotting data..."
-    img = p.plotData(source)
+    img, scaleInfo = p.plotData(source)
 
-    print "Adding coastlines..."
-    img = p.plotCoastlines(img)
+#   print "Adding coastlines..."
+#    img = p.plotCoastlines(img)
 
     print "Adding coordinate lines..."
     img = p.plotCoordinateLines(img)
 
     print "Packing image..."
-    img = p.packImage(img, timestamp='201411181531', channel='IR1')
+    img, imgRegion = p.packImage(img, timestamp='201411181531', channel='IR1', scale=scaleInfo)
 
     img.save('output.png')
     exit()

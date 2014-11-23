@@ -82,14 +82,14 @@ for each in geossFile:
     p = plotter()
 
     if 'VIS' == CHANNEL:
-        p.setColorScale(-5, 105, False)
+        p.setScaleParameters(False, '%')
         p.setConvertTable(convertTable)
         p.setSourceRegion(59.995, 85.005, -60.005, -154.995)
         p.setDataDimension(12000, 12000)
         p.setDK(DK)
         p.setDataResolution(0.01, 0.01)
     else:
-        p.setColorScale(200, 300)
+        p.setScaleParameters(True, 'K')
         p.setConvertTable(convertTable)
         p.setSourceRegion(59.98, 85.02, -60.02, -154.98)
         p.setDataDimension(3000, 3000)
@@ -97,7 +97,7 @@ for each in geossFile:
         p.setDataResolution(0.04, 0.04)
 
     print "> Plotting data..."
-    img = p.plotData(source)
+    img, scaleInfo = p.plotData(source)
 
     #print "> Adding coastlines..."
     #img = p.plotCoastlines(img)
@@ -106,13 +106,13 @@ for each in geossFile:
     img = p.plotCoordinateLines(img)
 
     print "> Packing image..."
-    img, imgDataRegion = p.packImage(img, timestamp=TIME, channel=CHANNEL)
+    img, imgDataRegion = p.packImage(img, timestamp=TIME, channel=CHANNEL, scale=scaleInfo)
 
     img.save(os.path.join(outputPath, filename))
     print ">>> Image saved to: %s\n" % filename
 
     if logFilePath != False:
-        logStr = '\t'.join([filename, str(time.time()), str(imgDataRegion)])
+        logStr = '\t'.join([filename, str(time.time()), str(imgDataRegion), str(imgColorScaleInfo)])
         logStr += '\n'
         open(logFilePath, 'a+').write(logStr)
         print ">>> Log to [%s]: %s" % (logFilePath, logStr)

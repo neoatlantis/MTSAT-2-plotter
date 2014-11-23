@@ -82,7 +82,7 @@ class plotter:
         elif dk == '2':
             self.effectiveRegion = (0, 0, w, h / 2)
         else:
-            self.effectiveRegion = (h/2, 0, w, h)
+            self.effectiveRegion = (0, h/2, w, h)
 
     def setDataResolution(self, latRes, lngRes):
         self.dataResolution = (latRes, lngRes) # deltaLat, deltaLng

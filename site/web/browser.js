@@ -68,11 +68,14 @@ var loadData = function(filename, callback){
     if(!/^[0-9]{12}\.((IR[1-4])|VIS)\.(FULL|NORTH|SOUTH)\.png$/.test(filename))
         return false;
 
-    var datemonth = filename.slice(0, 6),
-        url = 'http://mtsat-2.neoatlantis.org/data/'
-            + datemonth
-            + '/' + filename
-    ;
+    var datemonth = filename.slice(0, 6);
+    var url = 'http://mtsat-2.neoatlantis.org/data/' + datemonth + '/';
+    url += filename.slice(0, 12);
+    if(filename.slice(13, 15) == 'IR') 
+        url += '.ir';
+    else
+        url += '.vis';
+    url += '/' + filename;
 
     if(undefined !== loadDataCache[filename]){
         callback(img);        
@@ -95,7 +98,7 @@ var loadData = function(filename, callback){
 
 
 /* Retrive index file (log.txt) and auto parse */
-var indexFileCache = {}, dateFileMetadata = {};
+var indexFileCache = {}, dataFileMetadata = {};
 function loadIndexFile(dateMonth, callback){
     function parser(s){
         var sp = s.split('\n'), lp, range, filename, filenameS;
@@ -105,7 +108,8 @@ function loadIndexFile(dateMonth, callback){
             range = lp[2].trim().slice(1,-1).split(',');
             filename = lp[0].trim();
             filenameS = filename.split('.');
-            dateFileMetadata[filename] = {
+            dataFileMetadata[filename] = {
+                'filename': filename,
                 'time': filenameS[0],
                 'date': filenameS[0].slice(0, 8),
                 'dateMonth': filenameS[0].slice(0, 6),
@@ -138,20 +142,34 @@ function loadIndexFile(dateMonth, callback){
 
 //////////////////////////////////////////////////////////////////////////////
 
+/* command to load a image, process it and show */
+
+function showCloudAtlas(filename){
+    // bound to the button, which, when clicked, calls this function
+    var metadata = dataFileMetadata[filename];
+    if(!metadata) return alert('无数据。');
+
+    loadData(filename, function(img){
+        console.log(img)
+        $(img).appendTo('body')
+    });
+};
+
+
 /* filter date list */
 
 var dataFilterStart, dataFilterEnd, dataFilterChannel;
 function filterDateList(){
     // the filter updates the list in UI by given start and end.  date list
-    // being filtered(`dateFileMetadata`) is maintained by 'loadIndexFile'
+    // being filtered(`dataFileMetadata`) is maintained by 'loadIndexFile'
     // function.
     
     // append to list
     $('[name="data-list"]').empty();
     var list = [];
     
-    for(var filename in dateFileMetadata){
-        var metadata = dateFileMetadata[filename];
+    for(var filename in dataFileMetadata){
+        var metadata = dataFileMetadata[filename];
         if(!(
             compareDate(dataFilterStart, metadata.date) &&
             compareDate(metadata.date, dataFilterEnd)
@@ -179,7 +197,16 @@ function filterDateList(){
         ;
         $('[name="data-list"]').append(
             $('<div>').append(
-                $('<button>').html(display).addClass('button-date')
+                $('<button>', {
+                    'type': 'button',
+                })
+                    .html(display)
+                    .addClass('button-date')
+                    .click((function(f){
+                        return function(){
+                            showCloudAtlas(f);
+                        }
+                    })(list[i].filename))
             )
         );
     };

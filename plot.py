@@ -136,7 +136,7 @@ class plotter:
             raise Exception('Wrong data dimension specification.')
 
         ri = 0
-        maxGrey, minGrey = 0, 9999
+        maxGrey, minGrey = -99999, 99999
         for percent in xrange(0, 100):
             for i in xrange(0, dataSize / 100):
                 uint16 = (ord(dataString[ri]) << 8) + ord(dataString[ri+1])
@@ -144,7 +144,7 @@ class plotter:
                 dataColorMatrix.append(greyScale)
                 if greyScale > maxGrey:
                     maxGrey = greyScale 
-                elif greyScale < minGrey:
+                if greyScale < minGrey:
                     minGrey = greyScale 
                 ri += 2
             print "%d %%" % percent

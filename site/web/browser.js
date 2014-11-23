@@ -151,7 +151,8 @@ function showCloudAtlas(filename){
 
 /* filter date list */
 
-var dataFilterStart, dataFilterEnd, dataFilterChannel;
+var dataFilterStart, dataFilterEnd, dataFilterChannel,
+    dataFilterNorth = true, dataFilterSouth = true;
 function filterDateList(){
     // the filter updates the list in UI by given start and end.  date list
     // being filtered(`dataFileMetadata`) is maintained by 'loadIndexFile'
@@ -172,6 +173,12 @@ function filterDateList(){
         if(metadata.channel != dataFilterChannel)
             continue;
 
+        if(!(
+            (metadata.north && dataFilterNorth) ||
+            (metadata.south && dataFilterSouth)
+        ))
+            continue;
+
         list.push(metadata);
     };
 
@@ -188,17 +195,29 @@ function filterDateList(){
                     + list[i].time.slice(10,12)
                     + '<font color="#999">Z</font>'
         ;
+        var title = 'UTC时刻 '
+                    + list[i].time.slice(0,4) + '年'
+                    + list[i].time.slice(4,6) + '月'
+                    + list[i].time.slice(6,8)
+                    + '日 '
+                    + list[i].time.slice(8, 10) + '时'
+                    + list[i].time.slice(10,12) + '分'
+                    + ' 云图'
+        ;
         $('[name="data-list"]').append($('<div>').append(
             $('<button>', {
                 'type': 'button',
             })
                 .html(display)
                 .addClass('button-date')
-                .click((function(f){
+                .click((function(f,t){
                     return function(){
+                        $('#viewer-title').text(t);
+                        $('.button-date').removeClass('button-date-showing');
+                        $(this).addClass('button-date-showing');
                         showCloudAtlas(f);
                     }
-                })(list[i].filename))
+                })(list[i].filename, title))
         ));
     };
 };
@@ -253,6 +272,8 @@ $('#choose-date-range').click(function(){
     dataFilterStart = dateRange[2]; // str
     dataFilterEnd = dateRange[3]; // str
     dataFilterChannel = $('[name="view-channel"]').val(); // str
+    dataFilterNorth = $('[name="view-data-north"]').is(':checked');
+    dataFilterSouth = $('[name="view-data-south"]').is(':checked');
 
     function toDateMonth(year, month){
         return String(year) + ((month < 10)?('0' + String(month)):String(month));

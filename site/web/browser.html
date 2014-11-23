@@ -22,6 +22,9 @@
             border-width: 1px;
             border-style: solid;
         }
+        .button-date-showing{
+            background: #CCFFCC;
+        }
 
         #interface{
             float:left;
@@ -30,7 +33,13 @@
 
         #viewer{
             float: left;
+        }
+        #viewer-image-region{
             position: relative;
+        }
+        #viewer-title{
+            text-align: center;
+            font-weight: bold;
         }
         #viewer .viewer-zoomin,.viewer-zoomout{
             position: absolute;
@@ -78,15 +87,23 @@
             <input type="text" name="view-date-range-end" placeholder="YYYYMMDD" maxlength="8" size="8"/>
             <button id="choose-date-range" type="button">更新</button>
         </div>
+        <div>
+            <strong>数据范围</strong><br />
+            <input type="checkbox" name="view-data-north" checked/>北半球
+            <input type="checkbox" name="view-data-south" checked/>南半球
+        </div>
 
         <div name="data-list">
         </div>
     </div>
-    
+   
     <div id="viewer">
-        <div class="viewer-zoomin">+</div>
-        <div class="viewer-zoomout">-</div>
-        <canvas id="imgOutput" style="border: #FF0000 solid 1px"></canvas>
+        <div id="viewer-title"></div>
+        <div id="viewer-image-region">
+            <div class="viewer-zoomin">+</div>
+            <div class="viewer-zoomout">-</div>
+            <canvas id="imgOutput" style="border: #FF0000 solid 1px"></canvas>
+        </div>
     </div>
 
     <div style="clear: both"></div>

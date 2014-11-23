@@ -63,7 +63,6 @@ function compareDate(a, b){ // if a<=b
 
 /* Get satellite image from given filename */
 
-var loadDataCache = {}
 var loadData = function(filename, callback){
     if(!/^[0-9]{12}\.((IR[1-4])|VIS)\.(FULL|NORTH|SOUTH)\.png$/.test(filename))
         return false;
@@ -77,22 +76,10 @@ var loadData = function(filename, callback){
         url += '.vis';
     url += '/' + filename;
 
-    if(undefined !== loadDataCache[filename]){
-        callback(img);        
-    } else {
-        var img = new Image();
-        img.src = url;
-        img.onload = function(){
-            if(
-                !this.complete ||
-                typeof this.naturalWidth == "undefined" ||
-                this.naturalWidth == 0
-            )
-                loadDataCache[filename] = false;
-            else
-                loadDataCache[filename] = img;
-            callback(loadDataCache[filename]);
-        };
+    var img = new Image();
+    img.src = url;
+    img.onload = function(){
+        callback(img);
     };
 };
 
@@ -128,7 +115,6 @@ function loadIndexFile(dateMonth, callback){
                     max: parseInt(scale[1], 10),
                 },
             };
-            console.log(dataFileMetadata[filename])
         };
     };
     if(undefined !== indexFileCache[dateMonth]){

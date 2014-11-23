@@ -12,7 +12,9 @@
     <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.theme.min.css" />
 
     <style> 
-        .hidden{display: none;}
+        .hidden{
+            display: none;
+        }
         .button-date{
             background: #CCCCFF;
             border-color: #000000;
@@ -23,8 +25,7 @@
 </head>
 <body>
     <div class="hidden">
-        <div id="imgCache">
-        </div>
+        <canvas id="imgLoadCache"></canvas>
     </div>
 
     <div id="interface">
@@ -47,6 +48,8 @@
 
         <div name="data-list">
         </div>
+
+        <canvas id="imgOutput"></canvas>
     </div>
 </body>
 </html>

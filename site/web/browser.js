@@ -106,6 +106,7 @@ function loadIndexFile(dateMonth, callback){
             if(!sp[i]) continue;
             lp = sp[i].trim().split('\t');
             range = lp[2].trim().slice(1,-1).split(',');
+            scale = lp[3].trim().slice(1,-1).split(',');
             filename = lp[0].trim();
             filenameS = filename.split('.');
             dataFileMetadata[filename] = {
@@ -121,7 +122,11 @@ function loadIndexFile(dateMonth, callback){
                     y1: range[1],
                     x2: range[2],
                     y2: range[3],
-                }
+                },
+                'scale': {
+                    min: scale[0],
+                    max: scale[1],
+                },
             };
         };
     };
@@ -150,6 +155,17 @@ function showCloudAtlas(filename){
     if(!metadata) return alert('无数据。');
 
     loadData(filename, function(img){
+        var cacheCanvas = $('#imgLoadCache')[0];
+        var cacheCanvasContext = cacheCanvas.getContext('2d'); 
+
+        // copy the size to canvas
+        var width = img.width, height = img.height;
+        cacheCanvasContext.canvas.width = width;
+        cacheCanvasContext.canvas.height = height;
+
+        // copy the data to srcctx
+        cacheCanvasContext.clearRect(0, 0, width, height);
+        cacheCanvasContext.drawImage(img, 0, 0, width, height);
     });
 };
 

@@ -136,13 +136,14 @@ function loadIndexFile(dateMonth, callback){
 
 /* command to load a image, process it and show */
 
-function showCloudAtlas(filename){
+function showCloudAtlas(filename, callback){
     // bound to the button, which, when clicked, calls this function
     var metadata = dataFileMetadata[filename];
     if(!metadata) return alert('无数据。');
 
     function onImageRetrived(img){
         mapView.load(img, metadata);
+        if(callback) callback();
     };
 
     loadData(filename, onImageRetrived);
@@ -173,10 +174,10 @@ function filterDateList(){
         if(metadata.channel != dataFilterChannel)
             continue;
 
-        if(!(
-            (metadata.north && dataFilterNorth) ||
-            (metadata.south && dataFilterSouth)
-        ))
+        if(
+            (!metadata.north && dataFilterNorth) ||
+            (!metadata.south && dataFilterSouth)
+        )
             continue;
 
         list.push(metadata);
@@ -212,10 +213,13 @@ function filterDateList(){
                 .addClass('button-date')
                 .click((function(f,t){
                     return function(){
-                        $('#viewer-title').text(t);
-                        $('.button-date').removeClass('button-date-showing');
-                        $(this).addClass('button-date-showing');
-                        showCloudAtlas(f);
+                        var self = this;
+                        showCloudAtlas(f, function(){
+                            $('#viewer-title').text(t);
+                            $('.button-date')
+                                .removeClass('button-date-showing');
+                            $(self).addClass('button-date-showing');
+                        });
                     }
                 })(list[i].filename, title))
         ));
@@ -261,7 +265,7 @@ function validateDateRange(){
 };
 
 
-$('#choose-date-range').click(function(){
+$('#list-data').click(function(){
     var dateRange = validateDateRange();
     if(false === dateRange)
         return alert('输入的日期范围有误。起始日期必须早于终止日期，且不早于2014年11月19日; 终止日期不得晚于今日。');

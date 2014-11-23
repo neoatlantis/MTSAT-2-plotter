@@ -5,6 +5,7 @@
     <title>MTSAT-2 数据浏览器</title>
     <script src="./static/jquery.js"></script>
     <script src="./static/jquery-ui/jquery-ui.min.js"></script>
+    <script src="./mapView.js"></script>
     <script src="./browser.js"></script>
 
     <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.min.css" />
@@ -21,16 +22,47 @@
             border-width: 1px;
             border-style: solid;
         }
+
+        #interface{
+            float:left;
+            width: 20%;
+        }
+
+        #viewer{
+            float: left;
+            position: relative;
+        }
+        #viewer .viewer-zoomin,.viewer-zoomout{
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #FFFFFF;
+            border: #000000 1px solid;
+            left: 20px;
+            text-align: center;
+            line-height: 20px;
+        }
+        #viewer .viewer-zoomin{
+            top: 20px;
+        }
+        #viewer .viewer-zoomout{
+            top: 50px;
+        }
+
+        #imgOutput{
+            cursor: crosshair;
+        }
     </style>
 </head>
 <body>
     <div class="hidden">
         <canvas id="imgLoadCache"></canvas>
+        <canvas id="imgCropCache"></canvas>
     </div>
 
     <div id="interface">
         <div>
-            波段：
+            <strong>波段</strong><br />
             <select name="view-channel">
                 <option value="IR1">IR1</option>
                 <option value="IR2">IR2</option>
@@ -40,16 +72,23 @@
             </select>
         </div>
         <div>
+            <strong>日期范围</strong><br />
             <input type="text" name="view-date-range-start" placeholder="YYYYMMDD" maxlength="8" size="8"/>
             到
             <input type="text" name="view-date-range-end" placeholder="YYYYMMDD" maxlength="8" size="8"/>
-            <button id="choose-date-range" type="button">更新日期范围</button>
+            <button id="choose-date-range" type="button">更新</button>
         </div>
 
         <div name="data-list">
         </div>
-
-        <canvas id="imgOutput"></canvas>
     </div>
+    
+    <div id="viewer">
+        <div class="viewer-zoomin">+</div>
+        <div class="viewer-zoomout">-</div>
+        <canvas id="imgOutput" style="border: #FF0000 solid 1px"></canvas>
+    </div>
+
+    <div style="clear: both"></div>
 </body>
 </html>

@@ -69,7 +69,7 @@ var loadData = function(filename, callback){
         return false;
 
     var datemonth = filename.slice(0, 6);
-    var url = 'http://mtsat-2.neoatlantis.org/data/' + datemonth + '/';
+    var url = '/data/' + datemonth + '/';
     url += filename.slice(0, 12);
     if(filename.slice(13, 15) == 'IR') 
         url += '.ir';
@@ -118,16 +118,17 @@ function loadIndexFile(dateMonth, callback){
                 'south': 'FULL' == filenameS[2] || 'SOUTH' == filenameS[2],
                 'north': 'FULL' == filenameS[2] || 'NORTH' == filenameS[2],
                 'range': {
-                    x1: range[0],
-                    y1: range[1],
-                    x2: range[2],
-                    y2: range[3],
+                    x1: parseInt(range[0], 10),
+                    y1: parseInt(range[1], 10),
+                    x2: parseInt(range[2], 10),
+                    y2: parseInt(range[3], 10),
                 },
                 'scale': {
-                    min: scale[0],
-                    max: scale[1],
+                    min: parseInt(scale[0], 10),
+                    max: parseInt(scale[1], 10),
                 },
             };
+            console.log(dataFileMetadata[filename])
         };
     };
     if(undefined !== indexFileCache[dateMonth]){
@@ -135,7 +136,7 @@ function loadIndexFile(dateMonth, callback){
         callback();
     } else {
         $.get(
-            'http://mtsat-2.neoatlantis.org/data/' + dateMonth + '/log.txt',
+            '/data/' + dateMonth + '/log.txt',
             function(s){
                 indexFileCache[dateMonth] = s;
                 parser(s);
@@ -154,19 +155,11 @@ function showCloudAtlas(filename){
     var metadata = dataFileMetadata[filename];
     if(!metadata) return alert('无数据。');
 
-    loadData(filename, function(img){
-        var cacheCanvas = $('#imgLoadCache')[0];
-        var cacheCanvasContext = cacheCanvas.getContext('2d'); 
+    function onImageRetrived(img){
+        mapView.load(img, metadata);
+    };
 
-        // copy the size to canvas
-        var width = img.width, height = img.height;
-        cacheCanvasContext.canvas.width = width;
-        cacheCanvasContext.canvas.height = height;
-
-        // copy the data to srcctx
-        cacheCanvasContext.clearRect(0, 0, width, height);
-        cacheCanvasContext.drawImage(img, 0, 0, width, height);
-    });
+    loadData(filename, onImageRetrived);
 };
 
 
@@ -209,20 +202,18 @@ function filterDateList(){
                     + list[i].time.slice(10,12)
                     + '<font color="#999">Z</font>'
         ;
-        $('[name="data-list"]').append(
-            $('<div>').append(
-                $('<button>', {
-                    'type': 'button',
-                })
-                    .html(display)
-                    .addClass('button-date')
-                    .click((function(f){
-                        return function(){
-                            showCloudAtlas(f);
-                        }
-                    })(list[i].filename))
-            )
-        );
+        $('[name="data-list"]').append($('<div>').append(
+            $('<button>', {
+                'type': 'button',
+            })
+                .html(display)
+                .addClass('button-date')
+                .click((function(f){
+                    return function(){
+                        showCloudAtlas(f);
+                    }
+                })(list[i].filename))
+        ));
     };
 };
 

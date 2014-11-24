@@ -175,7 +175,7 @@ function filterDateList(){
     };
 
     list.sort(function(a,b){
-        return compareDate(a.time, b.time);
+        return compareDate(b.time, a.time);
     });
 
     for(var i=0; i<list.length; i++){

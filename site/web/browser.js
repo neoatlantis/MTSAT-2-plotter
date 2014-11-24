@@ -29,7 +29,7 @@ function validateDateFormat(s){
     return [year, month, day]; 
 };
 
-function compareDate(a, b){ // if a<=b
+function compareDate(a, b){
     function toTimestamp(s){
         var year = s.slice(0,4),
             month = s.slice(4,6),
@@ -48,7 +48,7 @@ function compareDate(a, b){ // if a<=b
             ).getTime();
         };
     };
-    return (toTimestamp(a) <= toTimestamp(b));
+    return (toTimestamp(a) - toTimestamp(b));
 };
 
 
@@ -157,8 +157,8 @@ function filterDateList(){
     for(var filename in dataFileMetadata){
         var metadata = dataFileMetadata[filename];
         if(!(
-            compareDate(dataFilterStart, metadata.date) &&
-            compareDate(metadata.date, dataFilterEnd)
+            compareDate(dataFilterStart, metadata.date) <= 0 &&
+            compareDate(metadata.date, dataFilterEnd) <= 0
         ))
             continue;
 
@@ -231,10 +231,10 @@ function validateDateRange(){
     if(false === dateRangeStart || false === dateRangeEnd)
         return false;
 
-    if(!compareDate(viewDateRangeStart, viewDateRangeEnd))
+    if(compareDate(viewDateRangeStart, viewDateRangeEnd) > 0)
         return false;
 
-    if(!compareDate('20141119', viewDateRangeStart))
+    if(compareDate('20141119', viewDateRangeStart) > 0)
         return false;
 
     var nowtime = new Date(), nowtimeStr = '', nowtimeY, nowtimeM, nowtimeD;
@@ -248,7 +248,7 @@ function validateDateRange(){
     if(nowtimeD < 10) nowtimeStr += '0';
     nowtimeStr += String(nowtimeD);
 
-    if(!compareDate(viewDateRangeEnd, nowtimeStr))
+    if(compareDate(viewDateRangeEnd, nowtimeStr) > 0)
         return false;
 
     // [[YYYY, MM, DD], [YYYY, MM, DD], 'YYYYMMDD', 'YYYYMMDD']

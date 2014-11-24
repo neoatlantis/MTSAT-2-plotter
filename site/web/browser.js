@@ -55,7 +55,7 @@ function compareDate(a, b){
 /* Get satellite image from given filename */
 
 var loadData = function(filename, callback){
-    if(!/^[0-9]{12}\.((IR[1-4])|VIS)\.(FULL|NORTH|SOUTH)\.png$/.test(filename))
+    if(!/^[0-9]{12}\.((IR[1-4])|VIS)\.(FULL|NORTH|SOUTH)\.(png|jpg)$/.test(filename))
         return false;
 
     var datemonth = filename.slice(0, 6);
@@ -95,6 +95,7 @@ function loadIndexFile(dateMonth, callback){
                 'channel': filenameS[1],
                 'south': 'FULL' == filenameS[2] || 'SOUTH' == filenameS[2],
                 'north': 'FULL' == filenameS[2] || 'NORTH' == filenameS[2],
+                'type': filenameS[3],
                 'range': {
                     x1: parseInt(range[0], 10),
                     y1: parseInt(range[1], 10),

@@ -168,10 +168,12 @@ $("#viewer").mouseleave(function(e){
 });
 $("#imgOutput").mousemove(function(e){
     var offset = $(this).offset();
-    mapView.calculateCursorLatLng(
-        e.pageX - offset.left,
-        e.pageY - offset.top - 20 // XXX XXX WTF?!
-    );
+    var x = e.pageX - offset.left,
+        y = e.pageY - offset.top - 20;// XXX XXX WTF?!
+//    $('.viewer-cursor-horizontal').css('top', y);
+//    $('.viewer-cursor-vertical').css('left', y);
+
+    mapView.calculateCursorLatLng(x, y);
 });
 $("#imgOutput").dblclick(function(e){
     var offset = $(this).offset();

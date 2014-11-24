@@ -63,8 +63,26 @@
         #viewer .viewer-zoomout{
             top: 50px;
         }
+        #viewer .viewer-cursor-horizontal{
+            border-color: #FF0000;
+            border-style: solid;
+            border-width: 1px;
+            position: absolute;
+            left: 0px;
+            width: 600px;
+            height: 0px;
+        }
+        #viewer .viewer-cursor-vertical{
+            border-color: #FF0000;
+            border-style: solid;
+            border-width: 1px;
+            position: absolute;
+            top: 0px;
+            height: 600px;
+            width: 0px;
+        }
 
-        #imgOutput{
+        #viewer{
             cursor: crosshair;
             margin: 0px;
             padding: 0px;
@@ -110,6 +128,8 @@
         <div id="viewer-image-region" style="position: relative">
             <div class="viewer-zoomin">+</div>
             <div class="viewer-zoomout">-</div>
+            <!--<div class="viewer-cursor-horizontal"></div>
+            <div class="viewer-cursor-vertical"></div>-->
             <canvas id="imgOutput"></canvas>
         </div>
     </div>

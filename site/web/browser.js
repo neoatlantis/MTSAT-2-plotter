@@ -30,34 +30,22 @@ function validateDateFormat(s){
 };
 
 function compareDate(a, b){ // if a<=b
-    var year1 = parseInt(a.slice(0,4), 10),
-        month1 = parseInt(a.slice(4,6), 10),
-        day1 = parseInt(a.slice(6, 8)),
-        hour1 = parseInt(a.slice(8, 10)),
-        minute1 = parseInt(a.slice(10, 12));
-    var year2 = parseInt(b.slice(0,4), 10),
-        month2 = parseInt(b.slice(4,6), 10),
-        day2 = parseInt(b.slice(6, 8)),
-        hour2 = parseInt(b.slice(8, 10)),
-        minute2 = parseInt(b.slice(10, 12));
-
-    var aBigger = false;
-    if(year1 > year2)
-        aBigger = true;
-    else if (year1 == year2)
-        if(month1 > month2)
-            aBigger = true;
-        else if(month1 == month2)
-            if(day1 > day2)
-                aBigger = true;
-            else if(day1 == day2)
-                if(hour1 > hour2)
-                    aBigger = true;
-                else if(hour1 == hour2)
-                    if (minute1 > minute2)
-                        aBigger = true;
-
-    return !aBigger;
+    function toTimestamp(s){
+        var year = a.slice(0,4),
+            month = a.slice(4,6),
+            day = a.slice(6, 8);
+        if(8 == s.length)
+            return new Date(year + '-' + month + '-' + day).getTime();
+        else {
+            var hour = a.slice(8, 10),
+                minute = a.slice(10, 12);
+            return new Date(
+                year + '-' + month + '-' + day + 'T'
+                + hour + ':' + minute + 'Z'
+            ).getTime();
+        };
+    };
+    return toTimestamp(a) <= toTimestamp(b);
 };
 
 

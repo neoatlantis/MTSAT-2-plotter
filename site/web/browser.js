@@ -31,21 +31,24 @@ function validateDateFormat(s){
 
 function compareDate(a, b){ // if a<=b
     function toTimestamp(s){
-        var year = a.slice(0,4),
-            month = a.slice(4,6),
-            day = a.slice(6, 8);
+        var year = s.slice(0,4),
+            month = s.slice(4,6),
+            day = s.slice(6, 8);
         if(8 == s.length)
-            return new Date(year + '-' + month + '-' + day).getTime();
+            return new Date(
+                year + '-' + month + '-' + day + 'T'
+                + '00:00Z'
+            ).getTime();
         else {
-            var hour = a.slice(8, 10),
-                minute = a.slice(10, 12);
+            var hour = s.slice(8, 10),
+                minute = s.slice(10, 12);
             return new Date(
                 year + '-' + month + '-' + day + 'T'
                 + hour + ':' + minute + 'Z'
             ).getTime();
         };
     };
-    return toTimestamp(a) <= toTimestamp(b);
+    return (toTimestamp(a) <= toTimestamp(b));
 };
 
 
@@ -175,7 +178,7 @@ function filterDateList(){
         return compareDate(a.time, b.time);
     });
 
-    for(var i in list){
+    for(var i=0; i<list.length; i++){
         var display = list[i].time.slice(0,4) + '-'
                     + list[i].time.slice(4,6) + '-'
                     + list[i].time.slice(6,8)

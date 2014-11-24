@@ -55,15 +55,16 @@ for each in geossFile:
     DK = each.name[7]
     TIME = each.name[12:24]
 
+    fileType = 'jpg'
     if DK == '1':
         mode = "full scan"
-        filename = '%s.%s.FULL.png' % (TIME, CHANNEL)
+        filename = '%s.%s.FULL.%s' % (TIME, CHANNEL, fileType)
     elif DK == '2':
         mode = "north heimsphere scan"
-        filename = '%s.%s.NORTH.png' % (TIME, CHANNEL)
+        filename = '%s.%s.NORTH.%s' % (TIME, CHANNEL, fileType)
     else:
         mode = "south heimsphere scan"
-        filename = '%s.%s.SOUTH.png' % (TIME, CHANNEL)
+        filename = '%s.%s.SOUTH.%s' % (TIME, CHANNEL, fileType)
     print "> Start generation of image, channel %s, time %s, mode %s." % (CHANNEL, TIME, mode)
 
     print "> Extracting file..."

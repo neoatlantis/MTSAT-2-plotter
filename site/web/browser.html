@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.theme.min.css" />
 
     <style> 
+        body{
+            font-size: 11pt;
+        }
         .hidden{
             display: none;
         }
@@ -26,16 +29,19 @@
             background: #CCFFCC;
         }
 
-        #interface{
+        #interface,#status{
             float:left;
             width: 20%;
         }
 
         #viewer{
             float: left;
+            padding-left: 10px;
+            padding-right: 10px;
         }
         #viewer-image-region{
             position: relative;
+            border: #FF0000 solid 1px;
         }
         #viewer-title{
             text-align: center;
@@ -60,6 +66,8 @@
 
         #imgOutput{
             cursor: crosshair;
+            margin: 0px;
+            padding: 0px;
         }
     </style>
 </head>
@@ -99,10 +107,17 @@
    
     <div id="viewer">
         <div id="viewer-title"></div>
-        <div id="viewer-image-region">
+        <div id="viewer-image-region" style="position: relative">
             <div class="viewer-zoomin">+</div>
             <div class="viewer-zoomout">-</div>
-            <canvas id="imgOutput" style="border: #FF0000 solid 1px"></canvas>
+            <canvas id="imgOutput"></canvas>
+        </div>
+    </div>
+
+    <div id="status">
+        <div>
+            鼠标位置：
+            <div id="status-cursor-latlng"></div>
         </div>
     </div>
 

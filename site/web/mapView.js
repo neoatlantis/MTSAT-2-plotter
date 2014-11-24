@@ -14,6 +14,11 @@ var center = {x:0, y:0}; // the center of viewer on original map.
 var viewH = 600, viewW = 0;
 var cropL, cropT, cropW, cropH, cropR, cropB;
 
+// TODO for VIS channel this is different
+var srcLatN = 59.98, srcLngW = 85.02,
+    srcPixelLat = 0.04, srcPixelLng = 0.04;
+var cursorLat, cursorLng;
+
 mapView.updateCropRegion = function(){
     var srcW = Math.abs(metadata.range.x2 - metadata.range.x1),
         srcH = Math.abs(metadata.range.y2 - metadata.range.y1),
@@ -21,7 +26,7 @@ mapView.updateCropRegion = function(){
         srcT = Math.min(metadata.range.y2, metadata.range.y1),
         srcR = srcW + srcL,
         srcB = srcH + srcT;
-    viewW = Math.floor(srcW / srcH * viewH);
+    viewW = srcW / srcH * viewH;
 
     zoomCoeff = srcW / (viewW * zoomLevel);
     if(zoomCoeff < 1){
@@ -68,8 +73,6 @@ mapView.redraw = function(){
     outCanvasContext.canvas.width = viewW;
     outCanvasContext.canvas.height = viewH;
 
-    console.log(cropL, cropT, cropW, cropH);
-
     outCanvasContext.drawImage(
         image,
         cropL,
@@ -81,6 +84,22 @@ mapView.redraw = function(){
         viewW,
         viewH
     );
+};
+
+mapView.calculateCursorLatLng = function(mouseX, mouseY){
+    // viewW, viewH
+    var pixelYToCenter = viewH / 2 - mouseY,
+        pixelXToCenter = viewW / 2 - mouseX;
+
+    var cursorPixelLat = center.y - pixelYToCenter * zoomCoeff,
+        cursorPixelLng = center.x - pixelXToCenter * zoomCoeff;
+    
+    cursorLat = srcLatN - cursorPixelLat * srcPixelLat;
+    cursorLng = srcLngW + cursorPixelLng * srcPixelLng;
+    if(cursorLng > 180) cursorLng -= 360;
+};
+mapView.getCursorLatLng = function(){
+    return {lat: cursorLat, lng: cursorLng};
 };
 
 mapView.mouseDrag = function(deltaX, deltaY){
@@ -95,6 +114,7 @@ mapView.mouseDblclick = function(clickX, clickY){
     center.y = clickY * zoomCoeff;
     mapView.redraw();
 };
+
 
 mapView.load = function(img, m){
     image = img;
@@ -146,11 +166,18 @@ $("#viewer").mouseup(function(e){
 $("#viewer").mouseleave(function(e){
     mouseDragging = false;
 });
-$("#viewer").dblclick(function(e){
+$("#imgOutput").mousemove(function(e){
+    var offset = $(this).offset();
+    mapView.calculateCursorLatLng(
+        e.pageX - offset.left,
+        e.pageY - offset.top - 20 // XXX XXX WTF?!
+    );
+});
+$("#imgOutput").dblclick(function(e){
     var offset = $(this).offset();
     mapView.mouseDblclick(
-        e.clientX - offset.left,
-        e.clientY - offset.top
+        e.pageX - offset.left,
+        e.pageY - offset.top - 20 // XXX WTF for this 20?
     );
 });
 

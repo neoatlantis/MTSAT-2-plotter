@@ -296,5 +296,23 @@ $('#list-data').click(function(){
         loadIndexFile(list[i], filterDateList);
 });
 
+$('#viewer').mousemove(function(){
+    var cursorPos = mapView.getCursorLatLng(), str = '';
+    if(cursorPos.lat > 0)
+        str += '北纬' + String(cursorPos.lat) + '度';
+    else if(cursorPos.lat < 0)
+        str += '南纬' + String(-cursorPos.lat) + '度';
+    else
+        str += '赤道';
+    str += '<br />';
+
+    if(cursorPos.lng > 0)
+        str += '东经' + String(cursorPos.lng) + '度';
+    else
+        str += '西经' + String(-cursorPos.lng) + '度';
+
+    $('#status-cursor-latlng').html(str);
+});
+
 //////////////////////////////////////////////////////////////////////////////
 });

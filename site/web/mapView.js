@@ -4,6 +4,23 @@ $(function(){
 var outCanvas = $('#imgOutput')[0],
     cropCacheCanvas = $('#imgCropCache')[0];
 
+mapView.statusSubscribers = [];
+function emitStatusChanged(){
+    var v = $('.viewer-cursor-vertical'),
+        h = $('.viewer-cursor-horizontal');
+    var vLeft = parseInt(v.css('left')),
+        vWidth = parseInt(v.css('width'));
+    var hTop = parseInt(h.css('top')),
+        hHeight = parseInt(h.css('height'));
+    var mouseX = vLeft + vWidth / 2,
+        mouseY = hTop + hHeight / 2;
+    mapView.calculateCursorGreyScale(mouseX, mouseY);
+    mapView.calculateCursorLatLng(mouseX, mouseY);
+
+    for(var i=0; i<mapView.statusSubscribers.length; i++)
+        mapView.statusSubscribers[i]();
+};
+
 var initialized = false;
 
 var image, metadata;
@@ -17,7 +34,7 @@ var cropL, cropT, cropW, cropH, cropR, cropB;
 // TODO for VIS channel this is different
 var srcLatN = 59.98, srcLngW = 85.02,
     srcPixelLat = 0.04, srcPixelLng = 0.04;
-var cursorLat, cursorLng;
+var cursorLat, cursorLng, cursorGreyScale;
 
 mapView.updateCropRegion = function(){
     var srcW = Math.abs(metadata.range.x2 - metadata.range.x1),
@@ -28,11 +45,10 @@ mapView.updateCropRegion = function(){
         srcB = srcH + srcT;
     viewW = srcW / srcH * viewH;
 
+    if(zoomLevel < 1) zoomLevel = 1;
     zoomCoeff = srcW / (viewW * zoomLevel);
     if(zoomCoeff < 1){
         zoomCoeff = 1;
-        zoomLevel = Math.floor(srcW / viewW);
-        if(zoomLevel < 1) zoomLevel = 1;
     };
 
     cropW = viewW * zoomCoeff;
@@ -84,6 +100,8 @@ mapView.redraw = function(){
         viewW,
         viewH
     );
+    
+    emitStatusChanged();
 };
 
 mapView.calculateCursorLatLng = function(mouseX, mouseY){
@@ -100,6 +118,26 @@ mapView.calculateCursorLatLng = function(mouseX, mouseY){
 };
 mapView.getCursorLatLng = function(){
     return {lat: cursorLat, lng: cursorLng};
+};
+
+
+// dealing with calculation from grey scale to real value
+mapView.calculateCursorGreyScale = function(mouseX, mouseY){
+    var outCanvasContext = outCanvas.getContext('2d');
+    var data = outCanvasContext.getImageData(mouseX, mouseY, 1, 1);
+    cursorGreyScale = 0.5 * (data.data[1] + data.data[2]);
+    console.log(cursorGreyScale)
+};
+mapView.getCursorValue = function(){
+    var scaleMax = metadata.scale.max,
+        scaleMin = metadata.scale.min,
+        inverted = metadata.scale.inverted;
+    var sv = cursorGreyScale;
+    if(inverted) sv = 255 - sv;
+    return scaleMin + (sv / 255) * (scaleMax - scaleMin);
+};
+mapView.getCursorValueUnit = function(){
+    return metadata.scale.unit;
 };
 
 mapView.mouseDrag = function(deltaX, deltaY){
@@ -155,33 +193,58 @@ $("#viewer").mouseup(function(e){
     if(mouseDragging){
         endDragging.x = e.clientX;
         endDragging.y = e.clientY;
-
         var deltaX = endDragging.x - startDragging.x,
             deltaY = endDragging.y - startDragging.y;
-    
         mapView.mouseDrag(deltaX, deltaY);
+        emitStatusChanged();
     };
     mouseDragging = false;
 });
 $("#viewer").mouseleave(function(e){
     mouseDragging = false;
 });
-$("#imgOutput").mousemove(function(e){
-    var offset = $(this).offset();
-    var x = e.pageX - offset.left,
-        y = e.pageY - offset.top - 20;// XXX XXX WTF?!
-//    $('.viewer-cursor-horizontal').css('top', y);
-//    $('.viewer-cursor-vertical').css('left', y);
 
-    mapView.calculateCursorLatLng(x, y);
-});
-$("#imgOutput").dblclick(function(e){
-    var offset = $(this).offset();
-    mapView.mouseDblclick(
-        e.pageX - offset.left,
-        e.pageY - offset.top - 20 // XXX WTF for this 20?
-    );
-});
+
+
+/* define behaviours of draggable crosshair */
+var crosshairHDragging = false, crosshairVDragging = false,
+    crosshairHDragStart = 0, crosshairVDragStart = 0;
+$('.viewer-cursor-horizontal')
+    .mousedown(function(e){
+        e.stopPropagation();
+        crosshairHDragging = true;
+        crosshairHDragStart = e.clientY;
+    })
+    .mousemove(function(e){
+        e.stopPropagation();
+        if(!crosshairHDragging) return;
+        $(this).css('top', "+=" + String(e.clientY - crosshairHDragStart));
+        crosshairHDragStart = e.clientY;
+        emitStatusChanged();
+    })
+    .on('mouseup mouseleave', function(e){
+        e.stopPropagation();
+        crosshairHDragging = false;
+    })
+;
+$('.viewer-cursor-vertical')
+    .mousedown(function(e){
+        e.stopPropagation();
+        crosshairVDragging = true;
+        crosshairVDragStart = e.clientX;
+    })
+    .mousemove(function(e){
+        e.stopPropagation();
+        if(!crosshairVDragging) return;
+        $(this).css('left', "+=" + String(e.clientX - crosshairVDragStart));
+        crosshairVDragStart = e.clientX;
+        emitStatusChanged();
+    })
+    .on('mouseup mouseleave', function(e){
+        e.stopPropagation();
+        crosshairVDragging = false;
+    })
+;
 
 
 //////////////////////////////////////////////////////////////////////////////

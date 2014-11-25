@@ -31,6 +31,7 @@
 
         #interface,#status{
             float:left;
+            padding-left: 10px;
             width: 20%;
         }
 
@@ -56,6 +57,7 @@
             left: 20px;
             text-align: center;
             line-height: 20px;
+            z-index: 100;
         }
         #viewer .viewer-zoomin{
             top: 20px;
@@ -63,23 +65,26 @@
         #viewer .viewer-zoomout{
             top: 50px;
         }
-        #viewer .viewer-cursor-horizontal{
+
+        #viewer .viewer-cursor-horizontal,.viewer-cursor-vertical{
             border-color: #FF0000;
             border-style: solid;
             border-width: 1px;
+            background-color: #00FF00;
+            opacity: 0.4;
             position: absolute;
+        }
+        #viewer .viewer-cursor-horizontal{
             left: 0px;
+            top: 0px;
             width: 600px;
-            height: 0px;
+            height: 30px;
         }
         #viewer .viewer-cursor-vertical{
-            border-color: #FF0000;
-            border-style: solid;
-            border-width: 1px;
-            position: absolute;
+            left: 0px;
             top: 0px;
             height: 600px;
-            width: 0px;
+            width: 30px;
         }
 
         #viewer{
@@ -128,16 +133,20 @@
         <div id="viewer-image-region" style="position: relative">
             <div class="viewer-zoomin">+</div>
             <div class="viewer-zoomout">-</div>
-            <!--<div class="viewer-cursor-horizontal"></div>
-            <div class="viewer-cursor-vertical"></div>-->
+            <div class="viewer-cursor-horizontal"></div>
+            <div class="viewer-cursor-vertical"></div>
             <canvas id="imgOutput"></canvas>
         </div>
     </div>
 
     <div id="status">
         <div>
-            鼠标位置：
+            <h4>鼠标位置：</h4>
             <div id="status-cursor-latlng"></div>
+        </div>
+        <div>
+            <h4>光标中心物理量：</h4>
+            <div id="status-cursor-value"></div>
         </div>
     </div>
 

@@ -105,6 +105,8 @@ function loadIndexFile(dateMonth, callback){
                 'scale': {
                     min: parseInt(scale[0], 10),
                     max: parseInt(scale[1], 10),
+                    inverted: ('VIS' == filenameS[1]),
+                    unit: (('VIS' == filenameS[1])?'%':'K'),
                 },
             };
         };
@@ -288,22 +290,39 @@ $('#list-data').click(function(){
         loadIndexFile(list[i], filterDateList);
 });
 
-$('#viewer').mousemove(function(){
+mapView.statusSubscribers.push(function(){
+    function format(v, digits){
+        var s = String(v),
+            d = s.indexOf('.');
+        if(d < 0) return s + '.' + '000000000000000000'.slice(0, digits);
+        return s.slice(0, d + 1 + digits);
+    };
     var cursorPos = mapView.getCursorLatLng(), str = '';
     if(cursorPos.lat > 0)
-        str += '北纬' + String(cursorPos.lat) + '度';
+        str += '北纬' + format(cursorPos.lat, 3) + '度';
     else if(cursorPos.lat < 0)
-        str += '南纬' + String(-cursorPos.lat) + '度';
+        str += '南纬' + format(-cursorPos.lat, 3) + '度';
     else
         str += '赤道';
     str += '<br />';
 
     if(cursorPos.lng > 0)
-        str += '东经' + String(cursorPos.lng) + '度';
+        str += '东经' + format(cursorPos.lng, 3) + '度';
     else
-        str += '西经' + String(-cursorPos.lng) + '度';
+        str += '西经' + format(-cursorPos.lng, 3) + '度';
 
     $('#status-cursor-latlng').html(str);
+
+
+    var cursorValue = mapView.getCursorValue(), 
+        cursorValueUnit = mapView.getCursorValueUnit(),
+        cursorValueShown = '';
+    if('K' == cursorValueUnit)
+        cursorValueShown = 
+            format(cursorValue, 2) + " K / " + 
+            format(cursorValue - 273.15, 2) + " &#x2103;"
+        ;
+    $('#status-cursor-value').html(cursorValueShown);
 });
 
 //////////////////////////////////////////////////////////////////////////////

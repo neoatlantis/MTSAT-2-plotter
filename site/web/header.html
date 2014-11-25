@@ -13,7 +13,7 @@
             $(function(){
                 var pathstr = $('#title').text().trim();
                 var paths = pathstr.split('/').slice(1,-1);
-                var output = '当前位置：<a href="/">根目录</a> &gt; ';
+                var output = '当前位置：<a href="/">MTSAT-2卫星数据镜像及结果</a> &gt; ';
                 for(var i=0; i<paths.length; i++){
                     output += '<a href="/' + paths.slice(0, i+1).join('/') + '">' + paths[i] + '</a> &gt; ';
                 };

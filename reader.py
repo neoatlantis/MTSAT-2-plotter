@@ -8,8 +8,11 @@ import os
 import sys
 import time
 import tarfile
+
 from plot import plotter
 from headerFileReader import extractConvertTable
+from split import splitter
+
 
 try:
     tar = tarfile.open(sys.argv[1], 'r:bz2')
@@ -109,7 +112,8 @@ for each in geossFile:
     print "> Packing image..."
     img, imgDataRegion = p.packImage(img, timestamp=TIME, channel=CHANNEL, scale=scaleInfo)
 
-    img.save(os.path.join(outputPath, filename))
+    imgSavePath = os.path.join(outputPath, filename)
+    img.save(imgSavePath)
     print ">>> Image saved to: %s\n" % filename
 
     if logFilePath != False:
@@ -117,3 +121,9 @@ for each in geossFile:
         logStr += '\n'
         open(logFilePath, 'a+').write(logStr)
         print ">>> Log to [%s]: %s" % (logFilePath, logStr)
+
+    print "> Splitting image for map viewer..."
+    try:
+        splitter(imgSavePath, img)
+    except Exception,e:
+        print "!> Error: %s" % e

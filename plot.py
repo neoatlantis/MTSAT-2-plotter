@@ -19,8 +19,8 @@ import array
 import math
 from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 
-from plotconfig import drawData, drawCoastline, projectionMethod, markRegion
-from plotconfig import cropLatN, cropLatS, cropLngDiffW, cropLngDiffE
+#from plotconfig import drawData, drawCoastline, projectionMethod, markRegion
+#from plotconfig import cropLatN, cropLatS, cropLngDiffW, cropLngDiffE
 import shapefile
 ##############################################################################
 

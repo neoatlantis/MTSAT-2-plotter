@@ -3,6 +3,7 @@ testdata
 *.pyc
 *.png
 *.jpg
+*.pgm
 ftpcopy
 site/data
 site/mirror

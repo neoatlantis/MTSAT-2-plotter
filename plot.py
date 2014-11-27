@@ -143,28 +143,13 @@ class plotter:
     def plotData(self, dataString):
         # plot data
         #   dataDimension := (X-points, Y-points), given by MTSAT-2
-        """
-        dataColorMatrix = array.array('B')
-        if dataSize != len(dataString) / 2:
-            raise Exception('Wrong data dimension specification.')
-        """
-        dataColorMatrix = converter.convert(self.lookupTable, dataString)
-        dataSize = len(dataColorMatrix)
-
-        ri = 0
-        maxGray, minGray = -99999, 99999
-        for percent in xrange(0, 100):
-            for i in xrange(0, dataSize / 100):
-                uint16 = (ord(dataString[ri]) << 8) + ord(dataString[ri+1])
-                grayScale = self._getPaintColor(uint16)
-                #dataColorMatrix.append(grayScale)
-                if grayScale > maxGray:
-                    maxGray = grayScale 
-                if grayScale < minGray:
-                    minGray = grayScale 
-                ri += 2
-            #print "%d %%" % percent
         
+        dataSize = self.dataDimension[0] * self.dataDimension[1]
+        extremeValues, imgGray = converter.convert(\
+            self.lookupTable, self.dataDimension, dataString
+        )
+        maxGray, minGray = extremeValues
+
         # maxGray and minGray are color gray extreme scales that are actually
         # drawn on the map.
 
@@ -173,7 +158,7 @@ class plotter:
 
         # form the data map
 
-        imgGray = Image.fromstring('L', self.dataDimension, dataColorMatrix)
+        #imgGray = Image.fromstring('L', self.dataDimension, dataColorMatrix)
         print "Grayscale image generated..."
 
         imgCrop = imgGray.crop(self.effectiveRegion)

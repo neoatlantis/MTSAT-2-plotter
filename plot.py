@@ -119,6 +119,17 @@ class plotter:
             value = (greyScale / 255.0) * (maximal - minimal) + minimal
         return value
 
+    def __withinSourceRegion(self, lat, lng):   
+        srcLatN, srcLngW, srcLatS, srcLngE = self.sourceRegion
+        if lat > srcLatN or lat < srcLatS:
+            return False
+        if srcLngW <= srcLngE:
+            return (lng >= srcLngW and lng <= srcLngE)
+        else:
+            if lng<0:
+                lng += 360
+            return (lng >= srcLngW and lng <= 360 + srcLngE)
+
     def __project(self, lat, lng):
         if lng < 0:
             lng += 360
@@ -189,13 +200,22 @@ class plotter:
         imgDraw = ImageDraw.Draw(imgG)
         latN, lngW, latS, lngE = self.sourceRegion
         coastline = shapefile.Reader('coastline/ne_50m_coastline')
+
         for each in coastline.shapes():
             points = each.points
+            use = False
             if len(points) < 2:
                 continue
+            for lng, lat in points:
+                if self.__withinSourceRegion(lat, lng):
+                    use = True
+                    break
+            if not use:
+                continue
             lastLng, lastLat = points[0]
-            for lng, lat in points[1:]:
-                self._lineColor(imgDraw, lastLat, lastLng, lat, lng, 255, 2)
+            for lng, lat in points:
+                if self.__withinSourceRegion(lat, lng):
+                    self._lineColor(imgDraw, lastLat, lastLng, lat, lng, 255, 2)
                 lastLng, lastLat = lng, lat
         img = Image.merge('RGB', (imgR, imgG, imgB))
         return img
@@ -523,8 +543,8 @@ if __name__ == '__main__':
     print "Plotting data..."
     img, scaleInfo = p.plotData(source)
 
-#   print "Adding coastlines..."
-#    img = p.plotCoastlines(img)
+    print "Adding coastlines..."
+    img = p.plotCoastlines(img)
 
     print "Adding coordinate lines..."
     img = p.plotCoordinateLines(img)

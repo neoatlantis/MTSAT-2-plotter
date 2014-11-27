@@ -22,6 +22,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 #from plotconfig import drawData, drawCoastline, projectionMethod, markRegion
 #from plotconfig import cropLatN, cropLatS, cropLngDiffW, cropLngDiffE
 import shapefile
+import converter
 ##############################################################################
 
 class plotter:
@@ -53,6 +54,7 @@ class plotter:
         tableSize = 65536 # TODO use the size from curve
         self.lookupTable = [0,] * tableSize
 
+        # TODO following loop is slow, fix it.
         curveLen = len(curve)
         for x in xrange(0, tableSize):
             for i in xrange(0, curveLen):
@@ -62,7 +64,7 @@ class plotter:
             value = 1.0 * (x - left[0]) / (right[0] - left[0])
             value *= (right[1] - left[1])
             value += left[1]
-            self.lookupTable[x] = self.__getGreyScale(value)
+            self.lookupTable[x] = self.__getGrayScale(value)
 
     def setSourceRegion(self, srcLatN, srcLngW, srcLatS, srcLngE):
         self.sourceRegion = (srcLatN, srcLngW, srcLatS, srcLngE)
@@ -92,12 +94,12 @@ class plotter:
         self.colorScaleUnit = unit
 
     def _getPaintColor(self, uint16):
-        # Convert the satellite result, which is Uint16, into Uint8 grey scale
+        # Convert the satellite result, which is Uint16, into Uint8 gray scale
         # color. This is done by simply looking up the lookup table
         # precalculated.
         return self.lookupTable[uint16]
 
-    def __getGreyScale(self, value):
+    def __getGrayScale(self, value):
         inverted = self.colorScaleInverted
         minimal, maximal = self.colorScaleRange
         if inverted:
@@ -110,13 +112,13 @@ class plotter:
             color = 0
         return color
 
-    def __getPhysicalValue(self, greyScale):
+    def __getPhysicalValue(self, grayScale):
         inverted = self.colorScaleInverted
         minimal, maximal = self.colorScaleRange
         if inverted:
-            value = (1 - greyScale / 255.0) * (maximal - minimal) + minimal
+            value = (1 - grayScale / 255.0) * (maximal - minimal) + minimal
         else:
-            value = (greyScale / 255.0) * (maximal - minimal) + minimal
+            value = (grayScale / 255.0) * (maximal - minimal) + minimal
         return value
 
     def __withinSourceRegion(self, lat, lng):   
@@ -141,40 +143,44 @@ class plotter:
     def plotData(self, dataString):
         # plot data
         #   dataDimension := (X-points, Y-points), given by MTSAT-2
+        """
         dataColorMatrix = array.array('B')
-        dataSize = self.dataDimension[0] * self.dataDimension[1]
         if dataSize != len(dataString) / 2:
             raise Exception('Wrong data dimension specification.')
+        """
+        dataColorMatrix = converter.convert(self.lookupTable, dataString)
+        dataSize = len(dataColorMatrix)
 
         ri = 0
-        maxGrey, minGrey = -99999, 99999
+        maxGray, minGray = -99999, 99999
         for percent in xrange(0, 100):
             for i in xrange(0, dataSize / 100):
                 uint16 = (ord(dataString[ri]) << 8) + ord(dataString[ri+1])
-                greyScale = self._getPaintColor(uint16)
-                dataColorMatrix.append(greyScale)
-                if greyScale > maxGrey:
-                    maxGrey = greyScale 
-                if greyScale < minGrey:
-                    minGrey = greyScale 
+                grayScale = self._getPaintColor(uint16)
+                #dataColorMatrix.append(grayScale)
+                if grayScale > maxGray:
+                    maxGray = grayScale 
+                if grayScale < minGray:
+                    minGray = grayScale 
                 ri += 2
-            print "%d %%" % percent
+            #print "%d %%" % percent
         
-        # maxGrey and minGrey are color grey extreme scales that are actually
+        # maxGray and minGray are color gray extreme scales that are actually
         # drawn on the map.
 
-        maxPhysicalValue = self.__getPhysicalValue(maxGrey)
-        minPhysicalValue = self.__getPhysicalValue(minGrey)
+        maxPhysicalValue = self.__getPhysicalValue(maxGray)
+        minPhysicalValue = self.__getPhysicalValue(minGray)
 
         # form the data map
 
-        imgGrey = Image.frombuffer('L', self.dataDimension, dataColorMatrix, 'raw', 'L', 0, 1)
+        imgGray = Image.fromstring('L', self.dataDimension, dataColorMatrix)
+        print "Grayscale image generated..."
 
-        imgCrop = imgGrey.crop(self.effectiveRegion)
+        imgCrop = imgGray.crop(self.effectiveRegion)
         imgCrop = ImageOps.equalize(imgCrop)
-        imgGrey.paste(imgCrop, self.effectiveRegion)
+        imgGray.paste(imgCrop, self.effectiveRegion)
 
-        imgColor = Image.merge('RGB', (imgGrey, imgGrey, imgGrey))
+        imgColor = Image.merge('RGB', (imgGray, imgGray, imgGray))
 
         # imgColor, imgColorScaleInfo(minPhy, maxPhy)
         return imgColor, (minPhysicalValue, maxPhysicalValue)
@@ -559,7 +565,7 @@ if __name__ == '__main__':
             
 """
 ##############################################################################
-# grey image adjust
+# gray image adjust
         #img = ImageOps.invert(img) // using new scale of color, not useful
 actualDrawX1, actualDrawY1 = toPlotXY(actualDrawLatMax, actualDrawLngMin)
 actualDrawX2, actualDrawY2 = toPlotXY(actualDrawLatMin, actualDrawLngMax)

@@ -9,3 +9,4 @@ site/data
 site/mirror
 converter
 debug*
+sendcache

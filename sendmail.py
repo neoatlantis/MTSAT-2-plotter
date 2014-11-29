@@ -152,8 +152,7 @@ mailer = Mail(\
     username=smtpUsername,
     password=smtpPassword,
     use_tls=True,
-    use_ssl=False,
-    debug_level=10000
+    use_ssl=False
 )
 
 

@@ -18,8 +18,4 @@ def convert(table, dimension, dataString):
     endstr = strout[-2:]
     strout = strout[:-2]
 
-    print "Write PGM file"
-    open('cache.pgm', 'w+').write(('P5\n#\n%d %d\n255\n' % dimension) + strout)
-    print 'PGM file wrote'
-    
-    return (ord(endstr[0]), ord(endstr[1])), Image.open('cache.pgm')
+    return strout

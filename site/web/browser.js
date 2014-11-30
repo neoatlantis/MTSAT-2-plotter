@@ -290,6 +290,7 @@ $('#list-data').click(function(){
         loadIndexFile(list[i], filterDateList);
 });
 
+/*
 mapView.statusSubscribers.push(function(){
     function format(v, digits){
         var s = String(v),
@@ -324,6 +325,7 @@ mapView.statusSubscribers.push(function(){
         ;
     $('#status-cursor-value').html(cursorValueShown);
 });
+*/
 
 //////////////////////////////////////////////////////////////////////////////
 });

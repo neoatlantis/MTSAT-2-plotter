@@ -5,12 +5,16 @@
     <title>MTSAT-2 数据浏览器</title>
     <script src="./static/jquery.js"></script>
     <script src="./static/jquery-ui/jquery-ui.min.js"></script>
-    <script src="./mapView.js"></script>
+    <script src="./static/leaflet.js"></script>
+
     <script src="./browser.js"></script>
+    <script src="./map.js"></script>
 
     <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.min.css" />
     <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.structure.min.css" />
     <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.theme.min.css" />
+
+    <link rel="stylesheet" href="./static/leaflet.css" />
 
     <style> 
         body{
@@ -35,62 +39,8 @@
             width: 20%;
         }
 
-        #viewer{
-            float: left;
-            padding-left: 10px;
-            padding-right: 10px;
-        }
-        #viewer-image-region{
-            position: relative;
-            border: #FF0000 solid 1px;
-        }
-        #viewer-title{
-            text-align: center;
-            font-weight: bold;
-        }
-        #viewer .viewer-zoomin,.viewer-zoomout{
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: #FFFFFF;
-            border: #000000 1px solid;
-            left: 20px;
-            text-align: center;
-            line-height: 20px;
-            z-index: 100;
-        }
-        #viewer .viewer-zoomin{
-            top: 20px;
-        }
-        #viewer .viewer-zoomout{
-            top: 50px;
-        }
-
-        #viewer .viewer-cursor-horizontal,.viewer-cursor-vertical{
-            border-color: #FF0000;
-            border-style: solid;
-            border-width: 1px;
-            background-color: #00FF00;
-            opacity: 0.4;
-            position: absolute;
-        }
-        #viewer .viewer-cursor-horizontal{
-            left: 0px;
-            top: 0px;
-            width: 600px;
-            height: 30px;
-        }
-        #viewer .viewer-cursor-vertical{
-            left: 0px;
-            top: 0px;
-            height: 600px;
-            width: 30px;
-        }
-
-        #viewer{
-            cursor: crosshair;
-            margin: 0px;
-            padding: 0px;
+        #map{
+            height: 550px;
         }
     </style>
 </head>
@@ -127,29 +77,7 @@
         <div name="data-list">
         </div>
     </div>
-   
-    <div id="viewer">
-        <div id="viewer-title"></div>
-        <div id="viewer-image-region" style="position: relative">
-            <div class="viewer-zoomin">+</div>
-            <div class="viewer-zoomout">-</div>
-            <div class="viewer-cursor-horizontal"></div>
-            <div class="viewer-cursor-vertical"></div>
-            <canvas id="imgOutput"></canvas>
-        </div>
-    </div>
 
-    <div id="status">
-        <div>
-            <h4>鼠标位置：</h4>
-            <div id="status-cursor-latlng"></div>
-        </div>
-        <div>
-            <h4>光标中心物理量：</h4>
-            <div id="status-cursor-value"></div>
-        </div>
-    </div>
-
-    <div style="clear: both"></div>
+    <div id="map"></div>
 </body>
 </html>

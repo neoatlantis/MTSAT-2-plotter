@@ -23,6 +23,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 #from plotconfig import cropLatN, cropLatS, cropLngDiffW, cropLngDiffE
 import shapefile
 import converter
+from colorscale import IR_COLOR as COLORSCALE
 ##############################################################################
 
 class plotter:
@@ -64,7 +65,7 @@ class plotter:
             value = 1.0 * (x - left[0]) / (right[0] - left[0])
             value *= (right[1] - left[1])
             value += left[1]
-            self.lookupTable[x] = self.__getGrayScale(value)
+            self.lookupTable[x] = self.__getColorScale(value)
 
     def setSourceRegion(self, srcLatN, srcLngW, srcLatS, srcLngE):
         self.sourceRegion = (srcLatN, srcLngW, srcLatS, srcLngE)
@@ -99,20 +100,10 @@ class plotter:
         # precalculated.
         return self.lookupTable[uint16]
 
-    def __getGrayScale(self, value):
-        inverted = self.colorScaleInverted
-        minimal, maximal = self.colorScaleRange
-        if inverted:
-            color = 255 - int((value - minimal) / (maximal - minimal) * 255.0)
-        else:
-            color = int((value - minimal) / (maximal - minimal) * 255.0)
-        if color > 255:
-            color = 255
-        elif color < 0:
-            color = 0
-        return color
+    def __getColorScale(self, value):
+        return COLORSCALE.getPaletteColor(value)
 
-    def __getPhysicalValue(self, grayScale):
+    """def __getPhysicalValue(self, grayScale):
         inverted = self.colorScaleInverted
         minimal, maximal = self.colorScaleRange
         if inverted:
@@ -120,6 +111,7 @@ class plotter:
         else:
             value = (grayScale / 255.0) * (maximal - minimal) + minimal
         return value
+    """
 
     def __withinSourceRegion(self, lat, lng):   
         srcLatN, srcLngW, srcLatS, srcLngE = self.sourceRegion
@@ -145,11 +137,16 @@ class plotter:
         #   dataDimension := (X-points, Y-points), given by MTSAT-2
         
         dataSize = self.dataDimension[0] * self.dataDimension[1]
-        extremeValues, imgGray = converter.convert(\
+        imgPStr = converter.convert(\
             self.lookupTable, self.dataDimension, dataString
         )
-        maxGray, minGray = extremeValues
+        # maxGray, minGray = extremeValues
 
+        imgP = Image.fromstring('P', self.dataDimension, imgPStr)
+        imgP.putpalette(COLORSCALE.PALETTE)
+        return imgP
+
+        """
         # maxGray and minGray are color gray extreme scales that are actually
         # drawn on the map.
 
@@ -169,6 +166,7 @@ class plotter:
 
         # imgColor, imgColorScaleInfo(minPhy, maxPhy)
         return imgColor, (minPhysicalValue, maxPhysicalValue)
+        """
 
     def _lineColor(self, imgDraw, lat1, lng1, lat2, lng2, color, bold):
         drawX1, drawY1 = self.__project(lat1, lng1)
@@ -179,16 +177,21 @@ class plotter:
         drawX, drawY = self.__project(lat, lng)
         imgDraw.text((drawX + offsetX, drawY + offsetY), str(text), font=font, fill=color)
 
-    def _drawCross(self, lat, lng, size, color):
-        global drawColor
-        drawX, drawY = toPlotXY(lat, lng)
+    def _drawCross(self, imgDraw, lat, lng, size, color):
+        drawX, drawY = self.__project(lat, lng)
         size = size / 2
-        drawColor.line([(drawX - size, drawY), (drawX + size, drawY)], fill="rgb(%d,%d,%d)" % color, width = 2)
-        drawColor.line([(drawX, drawY - size), (drawX, drawY + size)], fill="rgb(%d,%d,%d)" % color, width = 2)
+        imgDraw.line([(drawX - size, drawY), (drawX + size, drawY)], fill=color, width=2)
+        imgDraw.line([(drawX, drawY - size), (drawX, drawY + size)], fill=color, width=2)
+
+    def _drawXCross(self, imgDraw, lat, lng, size, color):
+        drawX, drawY = self.__project(lat, lng)
+        size = size / 2
+        imgDraw.line([(drawX-size, drawY-size), (drawX+size, drawY+size)], fill=color, width=2)
+        imgDraw.line([(drawX-size, drawY+size), (drawX+size, drawY-size)], fill=color, width=2)
 
     def plotCoastlines(self, imgColor):
-        imgR, imgG, imgB = imgColor.split()
-        imgDraw = ImageDraw.Draw(imgG)
+#        imgR, imgG, imgB = imgColor.split()
+        imgDraw = ImageDraw.Draw(imgColor)
         latN, lngW, latS, lngE = self.sourceRegion
         coastline = shapefile.Reader('coastline/ne_50m_coastline')
 
@@ -206,21 +209,28 @@ class plotter:
             lastLng, lastLat = points[0]
             for lng, lat in points:
                 if self.__withinSourceRegion(lat, lng):
-                    self._lineColor(imgDraw, lastLat, lastLng, lat, lng, 255, 2)
+                    self._lineColor(imgDraw, lastLat, lastLng, lat, lng, 0, 1)
                 lastLng, lastLat = lng, lat
-        img = Image.merge('RGB', (imgR, imgG, imgB))
-        return img
+#        img = Image.merge('RGB', (imgR, imgG, imgB))
+        return imgColor
 
-    def plotCoordinateLines(self, imgColor):
-        imgR, imgG, imgB = imgColor.split()
-        imgDraw = ImageDraw.Draw(imgR)
+    def plotCoordinate(self, imgColor):
+#        imgR, imgG, imgB = imgColor.split()
+        imgDraw = ImageDraw.Draw(imgColor)
         font = ImageFont.truetype('font.ttf', 32)
         
         latN, lngW, latS, lngE = self.sourceRegion
         latHeight, lngWidth = self.sourceRegionSize
 
-        for lat in xrange(-60, 61, 15):
-            self._lineColor(imgDraw, lat, lngW, lat, lngW + lngWidth, 255, 3)
+        for lat in xrange(-60, 61):
+            for lng in xrange(60, 300):
+                if lat % 15 == 0 and lng % 15 == 0:
+                    self._drawXCross(imgDraw, lat, lng, 20, 0)
+
+        return imgColor
+
+        for lat in xrange(-60, 61, 5):
+            self._lineColor(imgDraw, lat, lngW, lat, lngW + lngWidth, 0, 1)
             if lat > 0:
                 strlat = str(lat) + 'N'
             elif lat < 0:
@@ -228,19 +238,21 @@ class plotter:
             else:
                 strlat = 'EQUATOR'
             textW, textH = font.getsize(strlat)
-            self._drawText(imgDraw, lat, lngW, 2, -textH-5, strlat, font, 255)
+            if lat % 20 == 0:
+                self._drawText(imgDraw, lat, lngW, 2, -textH-5, strlat, font, 0)
 
-        for lng in xrange(60, 300, 15):
-            self._lineColor(imgDraw, latS, lng, latN, lng, 255, 3)
+        for lng in xrange(60, 300, 5):
+            self._lineColor(imgDraw, latS, lng, latN, lng, 0, 1)
             if lng > 180:
                 strlng = str(360 - lng) + 'W'
             else:
                 strlng = str(lng) + 'E'
             textW, textH = font.getsize(strlng)
-            self._drawText(imgDraw, 0, lng, -textW-2, 2, strlng, font, 255)
+            if lng % 20 == 0:
+                self._drawText(imgDraw, 0, lng, -textW-2, 2, strlng, font, 0)
         
-        img = Image.merge('RGB', (imgR, imgG, imgB))
-        return img
+#        img = Image.merge('RGB', (imgR, imgG, imgB))
+        return imgColor
 
         """
         # mark out regions
@@ -336,7 +348,7 @@ class plotter:
             envDraw.text((envL, envT), line.strip(), font=font, fill="black")
             envT += textH * 1.5
 
-        if argv["scale"]:
+        if argv.has_key("scale"):
             imgScaleBarW, imgScaleBarH = 200, 1024
             imgScaleBar = Image.new('RGB', (imgScaleBarW, imgScaleBarH))
             imgScaleBarDraw = ImageDraw.Draw(imgScaleBar)
@@ -386,68 +398,68 @@ class plotter:
 
 if __name__ == '__main__':
     convert = """
-    0:=330.06
-    30:=327.69
-    60:=325.29
-    89:=322.92
-    117:=320.60
-    144:=318.32
-    171:=316.01
-    197:=313.74
-    222:=311.52
-    247:=309.26
-    271:=307.06
-    294:=304.91
-    317:=302.72
-    339:=300.59
-    360:=298.52
-    381:=296.41
-    401:=294.37
-    421:=292.29
-    440:=290.27
-    459:=288.22
-    477:=286.24
-    495:=284.22
-    512:=282.27
-    529:=280.28
-    545:=278.38
-    561:=276.44
-    576:=274.58
-    591:=272.68
-    605:=270.88
-    619:=269.04
-    632:=267.29
-    645:=265.51
-    658:=263.69
-    670:=261.98
-    682:=260.23
-    694:=258.44
-    705:=256.76
-    716:=255.05
-    727:=253.30
-    737:=251.68
-    747:=250.01
-    757:=248.31
-    766:=246.75
-    775:=245.15
-    784:=243.51
-    792:=242.02
-    800:=240.50
-    808:=238.94
-    816:=237.35
-    823:=235.92
-    830:=234.46
-    837:=232.97
-    844:=231.43
-    850:=230.09
-    856:=228.71
-    862:=227.31
-    868:=225.86
-    874:=224.38
-    879:=223.12
-    884:=221.83
+    0:=329.98
+    30:=327.62
+    60:=325.21
+    89:=322.85
+    117:=320.52
+    144:=318.25
+    171:=315.94
+    197:=313.67
+    222:=311.45
+    247:=309.20
+    271:=307.00
+    294:=304.85
+    317:=302.66
+    339:=300.53
+    360:=298.46
+    381:=296.36
+    401:=294.32
+    421:=292.24
+    440:=290.22
+    459:=288.17
+    477:=286.19
+    495:=284.17
+    512:=282.22
+    529:=280.24
+    545:=278.34
+    561:=276.40
+    576:=274.54
+    591:=272.64
+    605:=270.84
+    619:=269.00
+    632:=267.25
+    645:=265.47
+    658:=263.66
+    670:=261.94
+    682:=260.20
+    694:=258.41
+    705:=256.73
+    716:=255.02
+    727:=253.28
+    737:=251.65
+    747:=249.99
+    757:=248.29
+    766:=246.73
+    775:=245.13
+    784:=243.49
+    792:=242.00
+    800:=240.48
+    808:=238.93
+    816:=237.33
+    823:=235.91
+    830:=234.45
+    837:=232.95
+    844:=231.42
+    850:=230.08
+    856:=228.70
+    862:=227.30
+    868:=225.85
+    874:=224.37
+    879:=223.11
+    884:=221.82
     889:=220.50
-    894:=219.15
+    894:=219.14
     899:=217.75
     904:=216.32
     908:=215.15
@@ -461,64 +473,64 @@ if __name__ == '__main__':
     938:=205.33
     941:=204.23
     944:=203.10
-    947:=201.93
-    950:=200.74
-    953:=199.51
-    956:=198.25
+    947:=201.94
+    950:=200.75
+    953:=199.52
+    956:=198.26
     959:=196.95
-    962:=195.60
-    964:=194.68
+    962:=195.61
+    964:=194.69
     966:=193.74
-    968:=192.77
-    970:=191.78
-    972:=190.76
-    974:=189.71
-    976:=188.64
-    978:=187.53
-    980:=186.39
-    982:=185.21
-    983:=184.61
-    984:=183.99
-    985:=183.37
-    986:=182.73
-    987:=182.08
-    988:=181.42
-    989:=180.75
-    990:=180.06
-    991:=179.35
-    992:=178.64
-    993:=177.90
-    994:=177.15
-    995:=176.38
-    996:=175.59
-    997:=174.78
-    998:=173.95
-    999:=173.10
-    1000:=172.22
-    1001:=171.32
-    1002:=170.38
-    1003:=169.42
-    1004:=168.42
-    1005:=167.39
-    1006:=166.32
-    1007:=165.20
-    1008:=164.04
-    1009:=162.83
-    1010:=161.55
-    1011:=160.21
-    1012:=158.80
-    1013:=157.30
-    1014:=155.70
-    1015:=153.99
-    1016:=152.14
-    1017:=150.12
-    1018:=147.90
-    1019:=145.43
-    1020:=142.60
-    1021:=139.30
-    1022:=135.27
-    1023:=129.99
-    65535:=129.99
+    968:=192.78
+    970:=191.79
+    972:=190.77
+    974:=189.73
+    976:=188.65
+    978:=187.54
+    980:=186.40
+    982:=185.23
+    983:=184.62
+    984:=184.01
+    985:=183.38
+    986:=182.75
+    987:=182.10
+    988:=181.44
+    989:=180.76
+    990:=180.07
+    991:=179.37
+    992:=178.65
+    993:=177.92
+    994:=177.17
+    995:=176.40
+    996:=175.61
+    997:=174.80
+    998:=173.97
+    999:=173.12
+    1000:=172.24
+    1001:=171.34
+    1002:=170.40
+    1003:=169.44
+    1004:=168.45
+    1005:=167.41
+    1006:=166.34
+    1007:=165.23
+    1008:=164.06
+    1009:=162.85
+    1010:=161.58
+    1011:=160.24
+    1012:=158.82
+    1013:=157.32
+    1014:=155.73
+    1015:=154.01
+    1016:=152.16
+    1017:=150.15
+    1018:=147.93
+    1019:=145.45
+    1020:=142.63
+    1021:=139.32
+    1022:=135.29
+    1023:=130.02
+    65535:=130.02
     """
 
     source = open('testdata/sample.geoss', 'r').read()
@@ -532,16 +544,16 @@ if __name__ == '__main__':
     p.setDataResolution(0.04, 0.04)
 
     print "Plotting data..."
-    img, scaleInfo = p.plotData(source)
+    img = p.plotData(source)
 
     print "Adding coastlines..."
     img = p.plotCoastlines(img)
 
     print "Adding coordinate lines..."
-    img = p.plotCoordinateLines(img)
+    img = p.plotCoordinate(img)
 
-    print "Packing image..."
-    img, imgRegion = p.packImage(img, timestamp='201411181531', channel='IR1', scale=scaleInfo)
+    #print "Packing image..."
+    #img, imgRegion = p.packImage(img, timestamp='201411181531', channel='IR1')#, scale=scaleInfo)
 
     img.save('output.png')
     exit()

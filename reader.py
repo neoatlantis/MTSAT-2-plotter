@@ -58,7 +58,10 @@ for each in geossFile:
     DK = each.name[7]
     TIME = each.name[12:24]
 
-    fileType = 'jpg'
+    if 'IR1' != CHANNEL:
+        continue
+
+    fileType = 'png'
     if DK == '1':
         mode = "full scan"
         filename = '%s.%s.FULL.%s' % (TIME, CHANNEL, fileType)
@@ -101,16 +104,13 @@ for each in geossFile:
         p.setDataResolution(0.04, 0.04)
 
     print "> Plotting data..."
-    img, scaleInfo = p.plotData(source)
+    img = p.plotData(source)
 
     print "> Adding coastlines..."
     img = p.plotCoastlines(img)
 
-    print "> Adding coordinate lines..."
-    img = p.plotCoordinateLines(img)
-
-    print "> Packing image..."
-    img, imgDataRegion = p.packImage(img, timestamp=TIME, channel=CHANNEL, scale=scaleInfo)
+    #print "> Adding coordinate lines..."
+    img = p.plotCoordinate(img)
 
     imgSavePath = os.path.join(outputPath, filename)
     img.save(imgSavePath)
@@ -124,6 +124,6 @@ for each in geossFile:
 
     print "> Splitting image for map viewer..."
     try:
-        splitter(imgSavePath, img)
+        splitter(p, imgSavePath, img)
     except Exception,e:
         print "!> Error: %s" % e

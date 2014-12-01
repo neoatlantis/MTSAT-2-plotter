@@ -16,7 +16,12 @@ var map = L.map('map', {
     crs: L.CRS.EPSG4326,
 }).setView([20.00, 140.00], 4);
 
-L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+var tileURL = "http://{s}.tile.osm.org/{z}/{x}/{y}.png";
+tileURL = "http://localhost:4001/201411300032.IR1.FULL.png-split/{z}/{x}/{y}.jpg";
+/*
+http://{s}.tile.osm.org/{z}/{x}/{y}.png
+*/
+L.tileLayer(tileURL, {
     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 6,
     minZoom: 4,

@@ -39,6 +39,7 @@ for each in mirrorList:
         print "Treating tarball [%s], saving to [%s]..." % (mirrorPath, outputPath)
         subprocess.call(['python', 'reader.py', mirrorPath, outputPath, logFilePath])
 
+        """
         print "Compressing result(s) for mailing..."
         resultListRaw = os.listdir(outputPath)
         commandList = ['7za', 'a', sendcacheFile]
@@ -46,6 +47,7 @@ for each in mirrorList:
             if each.endswith('.png') or each.endswith('.jpg'):
                 commandList.append(os.path.join(outputPath, each))
         subprocess.call(commandList)
+        """
 
         nowTime = time.time()
         if nowTime - startTime > 600:

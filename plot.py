@@ -190,12 +190,14 @@ class plotter:
         latN, lngW, latS, lngE = self.sourceRegion
         latHeight, lngWidth = self.sourceRegionSize
 
+        """
         for lat in xrange(-60, 61):
             for lng in xrange(60, 300):
                 if lat % 15 == 0 and lng % 15 == 0:
                     self._drawXCross(imgDraw, lat, lng, 20, 0)
 
         return imgColor
+        """
 
         for lat in xrange(-60, 61, 5):
             self._lineColor(imgDraw, lat, lngW, lat, lngW + lngWidth, 0, 1)
@@ -234,7 +236,6 @@ class plotter:
         if cropPointW <= 0 or cropPointH <= 0:
             raise Exception('Wrong parameter specified!')
 
-        print pointLT, pointRB
         # see if the region is inside our image, otherwise return None
         if (0 - pointL) * (drawW - pointL) > 0 and (0 - pointR) * (drawW - pointR) > 0:
             return None
@@ -417,13 +418,13 @@ if __name__ == '__main__':
     print "Adding coastlines..."
     img = p.plotCoastlines(img)
 
-    print "Adding coordinate lines..."
-    img = p.plotCoordinate(img)
+#    print "Adding coordinate lines..."
+#    img = p.plotCoordinate(img)
 
     img.save('output.png')
 
-    crop = p.cropAndResize(img, (60, -160.98, 50, -150.98))
+    crop = p.cropAndResize(img, (1.40625, 140-1.40625, -1.40625, 140+1.40625)).convert("RGB")
     if crop:
-        crop.save('crop.png')
+        crop.save('crop.jpg')
     else:
         print "Crop region not inside our image."

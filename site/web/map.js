@@ -57,5 +57,30 @@ $.getJSON('./static/geojson/graticules.json', function(json){
     }).addTo(map);
 });
 
+$.getJSON('./static/geojson/boundaries.json', function(json){
+    L.geoJson(json, {
+        style: {
+            'weight': '1.5px',
+            'color': '#FF0000',
+            'opacity': '1.0',
+        },
+    }).addTo(map);
+});
+
+
+/* initialize the drawing toolbar */
+
+// Initialise the FeatureGroup to store editable layers
+var drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+
+// Initialise the draw control and pass it the FeatureGroup of editable layers
+var drawControl = new L.Control.Draw({
+    edit: {
+        featureGroup: drawnItems
+    }
+});
+map.addControl(drawControl);
+
 //////////////////////////////////////////////////////////////////////////////
 });

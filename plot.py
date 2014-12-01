@@ -103,16 +103,6 @@ class plotter:
     def __getColorScale(self, value):
         return COLORSCALE.getPaletteColor(value)
 
-    """def __getPhysicalValue(self, grayScale):
-        inverted = self.colorScaleInverted
-        minimal, maximal = self.colorScaleRange
-        if inverted:
-            value = (1 - grayScale / 255.0) * (maximal - minimal) + minimal
-        else:
-            value = (grayScale / 255.0) * (maximal - minimal) + minimal
-        return value
-    """
-
     def __withinSourceRegion(self, lat, lng):   
         srcLatN, srcLngW, srcLatS, srcLngE = self.sourceRegion
         if lat > srcLatN or lat < srcLatS:
@@ -145,28 +135,6 @@ class plotter:
         imgP = Image.fromstring('P', self.dataDimension, imgPStr)
         imgP.putpalette(COLORSCALE.PALETTE)
         return imgP
-
-        """
-        # maxGray and minGray are color gray extreme scales that are actually
-        # drawn on the map.
-
-        maxPhysicalValue = self.__getPhysicalValue(maxGray)
-        minPhysicalValue = self.__getPhysicalValue(minGray)
-
-        # form the data map
-
-        #imgGray = Image.fromstring('L', self.dataDimension, dataColorMatrix)
-        print "Grayscale image generated..."
-
-        imgCrop = imgGray.crop(self.effectiveRegion)
-        imgCrop = ImageOps.equalize(imgCrop)
-        imgGray.paste(imgCrop, self.effectiveRegion)
-
-        imgColor = Image.merge('RGB', (imgGray, imgGray, imgGray))
-
-        # imgColor, imgColorScaleInfo(minPhy, maxPhy)
-        return imgColor, (minPhysicalValue, maxPhysicalValue)
-        """
 
     def _lineColor(self, imgDraw, lat1, lng1, lat2, lng2, color, bold):
         drawX1, drawY1 = self.__project(lat1, lng1)
@@ -251,149 +219,49 @@ class plotter:
             if lng % 20 == 0:
                 self._drawText(imgDraw, 0, lng, -textW-2, 2, strlng, font, 0)
         
-#        img = Image.merge('RGB', (imgR, imgG, imgB))
         return imgColor
 
-        """
-        # mark out regions
-        for each in markRegion:
-            region = each["region"]
-            center = each["center"]
-            p1, p2 = region[:2]
-            p1Lat, p1Lng = p1
-            p2Lat, p2Lng = p2
-            centerLat, centerLng = (p1Lat + p2Lat) / 2.0, (p1Lng + p2Lng) / 2.0 
-            
-            lineColor(imgDraw, p1Lat, p1Lng, p2Lat, p1Lng, (0, 0, 255), 2)
-            lineColor(imgDraw, p2Lat, p1Lng, p2Lat, p2Lng, (0, 0, 255), 2)
-            lineColor(p2Lat, p2Lng, p1Lat, p2Lng, (0, 0, 255), 2)
-            lineColor(p1Lat, p2Lng, p1Lat, p1Lng, (0, 0, 255), 2)
+    def cropAndResize(self, img, cropRegion):
+        cropN, cropW, cropS, cropE = cropRegion
+        drawW, drawH = self.dataDimension
+        outW, outH = 256, 256
 
-            if center:
-                drawCross(centerLat, centerLng, 16, (0,0,255))
-        """
+        pointLT = self.__project(cropN, cropW)
+        pointRB = self.__project(cropS, cropE)
+        pointL, pointT = pointLT
+        pointR, pointB = pointRB
+        cropPointW, cropPointH = pointR - pointL, pointB - pointT
+        if cropPointW <= 0 or cropPointH <= 0:
+            raise Exception('Wrong parameter specified!')
 
-    def packImage(self, img, **argv):
-        font = ImageFont.truetype('font.ttf', 32)
-        margin = 20
-        w, h = img.size
-        imgEnvSize = (w + 700 + 2 * margin, h + 2 * margin)
-        imgEnv = Image.new('RGB', imgEnvSize, 'rgb(100,100,255)')
-        imgCrop = img.crop((0, 0, w, h))
-        envDraw = ImageDraw.Draw(imgEnv)
+        print pointLT, pointRB
+        # see if the region is inside our image, otherwise return None
+        if (0 - pointL) * (drawW - pointL) > 0 and (0 - pointR) * (drawW - pointR) > 0:
+            return None
+        if (0 - pointT) * (drawH - pointT) > 0 and (0 - pointB) * (drawH - pointB) > 0:
+            return None 
 
-        imgDataRegion = (margin, margin, margin + w, margin + h)
-        imgEnv.paste(imgCrop, imgDataRegion)
-
-        envT = margin
-        envL = w + margin * 2
-        textW, textH = font.getsize('X')
-
-        time = argv["timestamp"]
-        timestamp = time[0:4] + '-' + time[4:6] + '-' + time[6:8] + ' '
-        timestamp += time[8:10] + ':' + time[10:12] + ' '
-        timestamp += 'UTC'
-
-        if self.dk == '1':
-            dataRegionDesc = "N+S Hemisphere"
-        elif self.dk == '2':
-            dataRegionDesc = "N Hemisphere"
-        else:
-            dataRegionDesc = "S Hemisphere"
-
-        text = """
-        NeoAtlantis MTSAT-2 Data Plotter
-        ===================================
-
-        Timestamp: %s
-        Channel: %s
-        Data Region: %s
-
-        MTSAT gridded data are provided by
-        the Center for Environmental Remote 
-        Sensing, Chiba University and 
-        sponsored by the ``Formation of a 
-        virtual laboratory for diagnosing 
-        the earth's climate system'' the
-        Ministry of Science, Sports, and
-        Culture. Original image data was 
-        provided by JMA.
-
-
-        This program is free software: you
-        can redistribute it and/or modify
-        it under the terms of the GNU
-        General Public License as published
-        by the Free Software Foundation,
-        either version 3 of the License, or
-        (at your option) any later version.
-
-        This program is distributed in the
-        hope that it will be useful, but
-        WITHOUT ANY WARRANTY; without even
-        the implied warranty of 
-        MERCHANTABILITY or FITNESS FOR A
-        PARTICULAR PURPOSE.  See the GNU
-        General Public License for more
-        details.
-
-        You should have received a copy of
-        the GNU General Public License
-        along with this program.  If not,
-        see <http://www.gnu.org/licenses/>.
-        """ % (timestamp, argv["channel"], dataRegionDesc)
-        text = text.strip().split('\n')
+        newImage = Image.new('P', (cropPointW, cropPointH), 0)
         
-        for line in text:
-            envDraw.text((envL, envT), line.strip(), font=font, fill="black")
-            envT += textH * 1.5
+        pasteX, pasteY = 0, 0
+        if pointR > drawW:
+            pointR = drawW
+        if pointB > drawH:
+            pointB = drawH
+        if pointL < 0:
+            pasteX = -pointL
+            pointL = 0
+        if pointT < 0:
+            pasteY = -pointT
+            pointT = 0
 
-        if argv.has_key("scale"):
-            imgScaleBarW, imgScaleBarH = 200, 1024
-            imgScaleBar = Image.new('RGB', (imgScaleBarW, imgScaleBarH))
-            imgScaleBarDraw = ImageDraw.Draw(imgScaleBar)
-            for i in xrange(0, imgScaleBarH):
-                fill = int(i * 255.0 / imgScaleBarH)
-                fill = "rgb(%d,%d,%d)" % (fill, fill, fill)
-                imgScaleBarDraw.line([(0, i), (imgScaleBarW, i)], fill=fill, width=1)
-            imgScaleBarLT = (\
-                w + margin * 2,
-                imgEnvSize[1] - margin - imgScaleBarH
-            )
-            imgScaleBarRegion = (\
-                imgScaleBarLT[0],
-                imgScaleBarLT[1],
-                imgScaleBarLT[0] + imgScaleBarW,
-                imgScaleBarLT[1] + imgScaleBarH
-            )
-            imgEnv.paste(imgScaleBar, imgScaleBarRegion)
-
-            # left top of the text area
-            textLT = (\
-                imgScaleBarLT[0] + imgScaleBarW + textW,
-                imgScaleBarLT[1]
-            )
-
-            # text min value
-            minValue = "%-5.2f %s" % (argv["scale"][0], self.colorScaleUnit)
-            envDraw.text(\
-                (textLT[0], imgScaleBarLT[1]),
-                minValue,
-                font=font,
-                fill="black"
-            )
-
-            # text max value
-            maxValue = "%-5.2f %s" % (argv["scale"][1], self.colorScaleUnit)
-            envDraw.text(\
-                (textLT[0], textLT[1] + imgScaleBarH - textH),
-                maxValue,
-                font=font,
-                fill="black"
-            )
-                
-        # done
-        return imgEnv, imgDataRegion
+        cropImage = img.crop((pointL, pointT, pointR, pointB))
+        newImage.paste(cropImage, (pasteX, pasteY))
+        newImage = newImage.resize((outW, outH))
+        newImage.putpalette(COLORSCALE.PALETTE)
+        return newImage
+        
+        
 
 
 if __name__ == '__main__':
@@ -552,31 +420,10 @@ if __name__ == '__main__':
     print "Adding coordinate lines..."
     img = p.plotCoordinate(img)
 
-    #print "Packing image..."
-    #img, imgRegion = p.packImage(img, timestamp='201411181531', channel='IR1')#, scale=scaleInfo)
-
     img.save('output.png')
-    exit()
-                
 
-            
-"""
-##############################################################################
-# gray image adjust
-        #img = ImageOps.invert(img) // using new scale of color, not useful
-actualDrawX1, actualDrawY1 = toPlotXY(actualDrawLatMax, actualDrawLngMin)
-actualDrawX2, actualDrawY2 = toPlotXY(actualDrawLatMin, actualDrawLngMax)
-
-imgCropRegion = (int(actualDrawX1), int(actualDrawY1), int(actualDrawX2), int(actualDrawY2))
-imgCrop = img.crop(imgCropRegion)
-imgCrop = ImageOps.equalize(imgCrop)
-img.paste(imgCrop, imgCropRegion)
-
-# enhance constrast
-#contrastEnhancer = ImageEnhance.Contrast(img)
-#contrastEnhancer.enhance(10)
-
-# brightness enhancer
-brightnessEnhancer = ImageEnhance.Brightness(img)
-brightnessEnhancer.enhance(0.5)
-"""
+    crop = p.cropAndResize(img, (60, -160.98, 50, -150.98))
+    if crop:
+        crop.save('crop.png')
+    else:
+        print "Crop region not inside our image."

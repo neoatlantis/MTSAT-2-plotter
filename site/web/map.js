@@ -29,13 +29,33 @@ tileURL = "http://localhost:4001/201411300032.IR1.FULL.png-split/{z}/{x}/{y}.png
 http://{s}.tile.osm.org/{z}/{x}/{y}.png
 */
 L.tileLayer(tileURL, {
-    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> | ' +
+        '<a href="http://www.cr.chiba-u.jp/english/">CEReS</a>, Chiba University | ' +
+        '<a href="http://www.naturalearthdata.com/">Natural Earth</a>',
     maxZoom: 6,
     minZoom: 3,
 }).addTo(map);
 
 
+$.getJSON('./static/geojson/coastline.json', function(json){
+    L.geoJson(json, {
+        style: {
+            'weight': '1.5px',
+            'color': '#FFAA00',
+            'opacity': '1.0',
+        },
+    }).addTo(map);
+});
 
+$.getJSON('./static/geojson/graticules.json', function(json){
+    L.geoJson(json, {
+        style: {
+            'weight': '1.5px',
+            'color': '#FFAA00',
+            'opacity': '1.0',
+        },
+    }).addTo(map);
+});
 
 //////////////////////////////////////////////////////////////////////////////
 });

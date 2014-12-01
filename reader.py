@@ -106,8 +106,8 @@ for each in geossFile:
     print "> Plotting data..."
     img = p.plotData(source)
 
-    print "> Adding coastlines..."
-    img = p.plotCoastlines(img)
+    #print "> Adding coastlines..."
+    #img = p.plotCoastlines(img)
 
     #print "> Adding coordinate lines..."
     #img = p.plotCoordinate(img)

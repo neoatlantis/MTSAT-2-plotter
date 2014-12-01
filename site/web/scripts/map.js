@@ -1,5 +1,15 @@
-mapView = {};
-$(function(){
+require([
+    'jquery',
+    'leaflet',
+
+    'leaflet.mouseposition',
+    'leaflet.draw',
+], function(
+    $,
+    L
+){
+
+var mapView = {};
 //////////////////////////////////////////////////////////////////////////////
 
 mapView.load = function(){};
@@ -83,4 +93,5 @@ var drawControl = new L.Control.Draw({
 map.addControl(drawControl);
 
 //////////////////////////////////////////////////////////////////////////////
+return mapView;
 });

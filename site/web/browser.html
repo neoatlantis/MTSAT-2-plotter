@@ -3,17 +3,17 @@
 <head>
     <meta charset="utf-8" />
     <title>MTSAT-2 数据浏览器</title>
-    <script src="./static/jquery.js"></script>
-    <script src="./static/jquery-ui/jquery-ui.min.js"></script>
-
-    <script src="./static/leaflet.js"></script>
-    <script src="./static/leaflet.mouseposition.js"></script>
-    <script src="./static/leaflet.draw.js"></script>
-    <script src="./static/gis.area.js"></script>
-
-
-    <script src="./browser.js"></script>
-    <script src="./map.js"></script>
+    <script src="./require.js" data-main="./scripts/browser.js">
+    <script>
+        require.config({
+            baseUrl: './scripts',
+            paths: {
+                'jquery': 'jquery',
+                'jquery-ui': 'jquery-ui.min',
+                'leaflet': 'leaflet',
+            },
+        });
+    </script>
 
     <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.min.css" />
     <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.structure.min.css" />

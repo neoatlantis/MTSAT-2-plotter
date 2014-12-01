@@ -1,4 +1,10 @@
-$(function(){
+require([
+    'jquery',
+    'map',
+], function(
+    $,
+    map
+){
 //////////////////////////////////////////////////////////////////////////////
 
 /* Date concerning functions */

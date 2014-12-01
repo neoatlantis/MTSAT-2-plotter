@@ -116,12 +116,6 @@ for each in geossFile:
     img.save(imgSavePath)
     print ">>> Image saved to: %s\n" % filename
 
-    if logFilePath != False:
-        logStr = '\t'.join([filename, str(time.time()), str(imgDataRegion), str(scaleInfo)])
-        logStr += '\n'
-        open(logFilePath, 'a+').write(logStr)
-        print ">>> Log to [%s]: %s" % (logFilePath, logStr)
-
     print "> Splitting image for map viewer..."
     try:
         splitter(p, imgSavePath, img)

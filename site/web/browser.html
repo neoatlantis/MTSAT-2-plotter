@@ -6,6 +6,7 @@
     <script src="./static/jquery.js"></script>
     <script src="./static/jquery-ui/jquery-ui.min.js"></script>
     <script src="./static/leaflet.js"></script>
+    <script src="./static/leaflet.mouseposition.js"></script>
 
     <script src="./browser.js"></script>
     <script src="./map.js"></script>
@@ -41,6 +42,15 @@
 
         #map{
             height: 550px;
+        }
+
+        .leaflet-container .leaflet-control-mouseposition {
+            background-color: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 0 5px #bbb;
+            padding: 0 5px;
+            margin:0;
+            color: #333;
+            font: 11px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
         }
     </style>
 </head>

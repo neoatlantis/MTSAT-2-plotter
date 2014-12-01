@@ -110,7 +110,7 @@ for each in geossFile:
     img = p.plotCoastlines(img)
 
     #print "> Adding coordinate lines..."
-    img = p.plotCoordinate(img)
+    #img = p.plotCoordinate(img)
 
     imgSavePath = os.path.join(outputPath, filename)
     img.save(imgSavePath)

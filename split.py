@@ -24,10 +24,10 @@ def splitter(p, fn, img=None):
         img = Image.open(fileFullName)
         print "> Read in image."
 
-    for zoomLevel in xrange(3, 6):
-        count = 2 ** zoomLevel
+    for zoomLevel in xrange(3, 7):
+        count = (1 << zoomLevel)
         gridDegreeX = 360.0 / count
-        gridDegreeY = 180.0 / count
+        gridDegreeY = 360.0 / count
 
         for x in xrange(0, count):
             cropW = x * gridDegreeX - 180
@@ -46,10 +46,14 @@ def splitter(p, fn, img=None):
                 print outPath
                 continue
 
-            cropS = 90.0
+            cropS = 180.0  # who knows how the developer of Leaflet.js thought
             for y in xrange(0, count):
-                cropS -= gridDegreeY
+                cropS -= gridDegreeY 
                 cropN = cropS + gridDegreeY
+
+                if abs(cropN) > 90.0:
+                    continue
+
                 try:
                     crop = p.cropAndResize(img, (cropN, cropW, cropS, cropE))
                 except:
@@ -57,4 +61,4 @@ def splitter(p, fn, img=None):
                     continue
                 if crop:
                     crop = crop.convert("RGB")
-                    crop.save(os.path.join(outPath, str(y) + '.jpg'))
+                    crop.save(os.path.join(outPath, str(y) + '.png'))

@@ -234,6 +234,7 @@ class plotter:
         pointR, pointB = pointRB
         cropPointW, cropPointH = pointR - pointL, pointB - pointT
         if cropPointW <= 0 or cropPointH <= 0:
+            print cropPointW, cropPointH, 'w,h'
             raise Exception('Wrong parameter specified!')
 
         # see if the region is inside our image, otherwise return None

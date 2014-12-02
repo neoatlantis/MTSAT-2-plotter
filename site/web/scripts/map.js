@@ -91,6 +91,7 @@ var drawControl = new L.Control.Draw({
     edit: {
         featureGroup: drawnItems,
         remove: true,
+        edit: true,
     },
     draw: {
         polygon: {
@@ -115,20 +116,25 @@ var drawControl = new L.Control.Draw({
 });
 map.addControl(drawControl);
 
+
+function bindPopupToLayer(layer){
+    var geoJSON = layer.toGeoJSON().geometry;
+    var area = (getGeoJSONArea.geometry(geoJSON) / 1000000);
+    layer.bindPopup('<strong>面积：</strong>' + String(L.Util.formatNum(area, 2)) + ' km&sup2;');
+}
+
 // when new area drawn
-map.on('draw:created', function (e) {
+map.on('draw:created', function(e) {
     var type = e.layerType,
         layer = e.layer;
+    if ('polygon' != type && 'rectangle' != type) return;
+    bindPopupToLayer(layer);
+    drawnItems.addLayer(layer);
+});
 
-    if ('polygon' == type || 'rectangle' == type) {
-        // Do marker specific actions
-        map.addLayer(layer);
-        
-        var geoJSON = layer.toGeoJSON().geometry;
-        var area = (getGeoJSONArea.geometry(geoJSON) / 1000000);
-        
-        layer.bindPopup('<strong>面积：</strong>' + String(L.Util.formatNum(area, 2)) + ' km&sup2;');
-    }
+// when area edited
+map.on('draw:edited', function(e){
+    e.layers.eachLayer(bindPopupToLayer);
 });
 
 //////////////////////////////////////////////////////////////////////////////

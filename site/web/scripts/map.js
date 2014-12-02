@@ -89,8 +89,29 @@ map.addLayer(drawnItems);
 // Initialise the draw control and pass it the FeatureGroup of editable layers
 var drawControl = new L.Control.Draw({
     edit: {
-        featureGroup: drawnItems
-    }
+        featureGroup: drawnItems,
+        remove: true,
+    },
+    draw: {
+        polygon: {
+            allowIntersection: false, // Restricts shapes to simple polygons
+            drawError: {
+                color: '#FF0000', // Color the shape will turn when intersects
+                message: '<strong>错误！<strong>不能绘制相交线。' // Message that will show when intersect
+            },
+            shapeOptions: {
+                color: '#FF00FF',
+            },
+        },
+        rectangle: {
+            shapeOptions: {
+                color: '#FF00FF',
+            },
+        },
+        polyline: false,
+        marker: false,
+        circle: false,
+    },
 });
 map.addControl(drawControl);
 
@@ -99,13 +120,14 @@ map.on('draw:created', function (e) {
     var type = e.layerType,
         layer = e.layer;
 
-    if (type === 'polygon' || type === 'rectangle') {
+    if ('polygon' == type || 'rectangle' == type) {
         // Do marker specific actions
         map.addLayer(layer);
         
         var geoJSON = layer.toGeoJSON().geometry;
-        console.log(geoJSON);
-        console.log(getGeoJSONArea.geometry(geoJSON));
+        var area = (getGeoJSONArea.geometry(geoJSON) / 1000000);
+        
+        layer.bindPopup('<strong>面积：</strong>' + String(L.Util.formatNum(area, 2)) + ' km&sup2;');
     }
 });
 

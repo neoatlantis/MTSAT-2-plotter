@@ -281,6 +281,18 @@ function mapView(){
         });
         return self;
     };
+    var buttonRegionLinesTogglerOptions = {
+          'text': '', //'MyButton',  // string
+          'iconUrl': './static/images/toggle-regionlines.png',  // string
+          'onClick': self.toggleRegionLines,  // callback function
+          'hideText': true,  // bool
+          'maxWidth': 30,  // number
+          'doToggle': false,  // bool
+          'toggleStatus': false  // bool
+    }   
+    var buttonRegionLinesToggler = new L.Control.Button(
+        buttonRegionLinesTogglerOptions
+    ).addTo(map);
 
 
     // show or hide graticules
@@ -293,13 +305,12 @@ function mapView(){
         });
         return self;
     };
-
     var buttonGraticulesTogglerOptions = {
-          'text': 'MyButton',  // string
-          'iconUrl': './static/images/marker-icon.png',  // string
+          'text': '', //'MyButton',  // string
+          'iconUrl': './static/images/toggle-graticules.png',  // string
           'onClick': self.toggleGraticules,  // callback function
           'hideText': true,  // bool
-          'maxWidth': 30,  // number
+          'maxWidth': 32,  // number
           'doToggle': false,  // bool
           'toggleStatus': false  // bool
     }   

@@ -33,6 +33,15 @@
  * The views and conclusions contained in the software and documentation are
  * those of the authors and should not be interpreted as representing official
  * policies, either expressed or implied, of OpenLayers Contributors.
+ *
+ *
+ * Usage
+ * -----
+ *      
+ * >  var area = geojsonArea.geometry(obj);
+ *
+ * Given a Geometry object of type Polygon or MultiPolygon, return contained
+ * area as square meters. Invalid input will return null.
  */
 
 define([], function(){

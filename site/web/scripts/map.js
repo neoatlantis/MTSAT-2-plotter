@@ -1,12 +1,14 @@
 require([
     'jquery',
     'leaflet',
+    'gis.area',
 
     'leaflet.mouseposition',
     'leaflet.draw',
 ], function(
     $,
-    L
+    L,
+    getGeoJSONArea
 ){
 
 var mapView = {};
@@ -91,6 +93,21 @@ var drawControl = new L.Control.Draw({
     }
 });
 map.addControl(drawControl);
+
+// when new area drawn
+map.on('draw:created', function (e) {
+    var type = e.layerType,
+        layer = e.layer;
+
+    if (type === 'polygon' || type === 'rectangle') {
+        // Do marker specific actions
+        map.addLayer(layer);
+        
+        var geoJSON = layer.toGeoJSON().geometry;
+        console.log(geoJSON);
+        console.log(getGeoJSONArea.geometry(geoJSON));
+    }
+});
 
 //////////////////////////////////////////////////////////////////////////////
 return mapView;

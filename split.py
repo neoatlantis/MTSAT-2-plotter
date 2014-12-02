@@ -39,12 +39,7 @@ def splitter(p, fn, img=None):
                 str(zoomLevel),
                 str(x)
             )
-            try:
-                os.makedirs(outPath)
-            except Exception,e:
-                print e
-                print outPath
-                continue
+            outPathCreated = False
 
             cropS = 180.0  # who knows how the developer of Leaflet.js thought
             for y in xrange(0, count):
@@ -59,6 +54,25 @@ def splitter(p, fn, img=None):
                 except:
                     print (cropN, cropW, cropS, cropE)
                     continue
-                if crop:
+                if not crop:
+                    continue
+
+                imgFormat = '.png'
+                if zoomLevel <= 5:
                     crop = crop.convert("RGB")
-                    crop.save(os.path.join(outPath, str(y) + '.png'))
+                    imgFormat = '.jpg'
+
+                if not outPathCreated: 
+                    try:
+                        os.makedirs(outPath)
+                        outPathCreated = True
+                    except Exception,e:
+                        print e
+                        print outPath
+                        continue
+
+                if outPathCreated:
+                    crop.save(\
+                        os.path.join(outPath, str(y) + imgFormat),
+                        quality=70
+                    )

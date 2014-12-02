@@ -2,19 +2,65 @@ require([
     'jquery',
     'leaflet',
     'gis.area',
+    'gis.length',
 
     'leaflet.mouseposition',
     'leaflet.draw',
 ], function(
     $,
     L,
-    getGeoJSONArea
+    getGeoJSONArea,
+    getGeoJSONLength
 ){
 
 var mapView = {};
 //////////////////////////////////////////////////////////////////////////////
 
+/* define some utilities */
+function floatToDegree(f, latLng='lat'){
+    function twoDigits(x){return ((x>10)?String(x):'0' + String(x));};
+    var str = '', negative=false;
+    if('lat' == latLng){
+        if(0 == f) return '赤道';
+        negative = (f < 0);
+        if(negative) f = Math.abs(f);
+        f = f % 90;
+    } else {
+        if(0 == f) return '0&deg;';
+        negative = (f < 0) || (f > 180);
+        if(f > 180) f = f - 360;
+        if(negative) f = Math.abs(f);
+        f = f % 180;
+    };
+    
+    var m = Math.floor(f);
+    str += m + '&deg;';
+    
+    f -= m;
+    f *= 60;
+    
+    m = Math.floor(f);
+    str += twoDigits(m) + "'";
+
+    f -= m;
+    f *= 60;
+
+    m = Math.floor(f);
+    str += twoDigits(m) + '"';
+
+    str += ' ';
+    if('lat' == latLng)
+        str += (negative?'S':'N');
+    else
+        str += (negative?'W':'E');
+    return str;
+};
+
+
+
+
 mapView.load = function(){};
+
 
 
 
@@ -32,7 +78,8 @@ L.control.mousePosition({
     prefix: '鼠标位置:',
     separator: ' / ',
     emptyString: '在地图上移动鼠标以获取位置',
-
+    lngFormatter: function(x){return floatToDegree(x, 'lng')},
+    latFormatter: function(x){return floatToDegree(x, 'lat')},
 }).addTo(map);
 
 var tileURL = "http://{s}.tile.osm.org/{z}/{x}/{y}.png";
@@ -50,8 +97,10 @@ canvasTiles.drawTile = function(canvas, tilePoint, zoom){
     var countMax = 1 << zoom;
     var ctx = canvas.getContext('2d');
     // draw something on the tile canvas
+
     var img = new Image();
-    img.src = "/201411300032.IR1.FULL.png-split/" + zoom + "/" + (tilePoint.x % countMax) + "/" + (tilePoint.y % countMax) + ".png"
+    var suffix = ((zoom <= 5)?'.jpg':'.png');
+    img.src = "/201411300032.IR1.FULL.png-split/" + zoom + "/" + (tilePoint.x % countMax) + "/" + (tilePoint.y % countMax) + suffix;
     img.onload = function(){
         ctx.drawImage(img, 0, 0, 256, 256);
     };
@@ -97,6 +146,15 @@ $.getJSON('./static/geojson/boundaries.json', function(json){
 var drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
+var crosshairIcon = L.Icon.extend({
+    options: {
+        shadowUrl: null,
+        iconAnchor: new L.Point(16, 16),
+        iconSize: new L.Point(32, 32),
+        iconUrl: './static/images/crosshair.png'
+    }
+});
+
 // Initialise the draw control and pass it the FeatureGroup of editable layers
 var drawControl = new L.Control.Draw({
     edit: {
@@ -120,8 +178,15 @@ var drawControl = new L.Control.Draw({
                 color: '#FF00FF',
             },
         },
-        polyline: false,
-        marker: false,
+        marker: {
+            icon: new crosshairIcon(),
+        },
+        polyline: {
+            shapeOptions: {
+                color: '#FF00FF',
+                weight: '4px',
+            },
+        },
         circle: false,
     },
 });
@@ -130,15 +195,28 @@ map.addControl(drawControl);
 
 function bindPopupToLayer(layer){
     var geoJSON = layer.toGeoJSON().geometry;
-    var area = (getGeoJSONArea.geometry(geoJSON) / 1000000);
-    layer.bindPopup('<strong>面积：</strong>' + String(L.Util.formatNum(area, 2)) + ' km&sup2;');
+    var type = layer.type;
+
+    if ('polygon' == type || 'rectangle' == type){
+        var area = (getGeoJSONArea.geometry(geoJSON) / 1000000);
+        layer.bindPopup('<strong>面积：</strong>' + String(L.Util.formatNum(area, 2)) + ' km&sup2;');
+    } else if('marker' == type){
+        layer.bindPopup(
+            '<strong>纬度</strong> ' + floatToDegree(layer._latlng.lat, 'lat') +
+            '<br />' +
+            '<strong>经度</strong> ' + floatToDegree(layer._latlng.lng, 'lng')
+        );
+    } else if('polyline' == type){
+        var len = (getGeoJSONLength(geoJSON) / 1000);
+        layer.bindPopup('<strong>长度：</strong>' + String(L.Util.formatNum(len)) + ' km');
+    };
 }
 
 // when new area drawn
 map.on('draw:created', function(e) {
     var type = e.layerType,
         layer = e.layer;
-    if ('polygon' != type && 'rectangle' != type) return;
+    layer.type = e.layerType
     bindPopupToLayer(layer);
     drawnItems.addLayer(layer);
 });

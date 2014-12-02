@@ -51,7 +51,7 @@ canvasTiles.drawTile = function(canvas, tilePoint, zoom){
     var ctx = canvas.getContext('2d');
     // draw something on the tile canvas
     var img = new Image();
-    img.src = "http://localhost:4001/201411300032.IR1.FULL.png-split/" + zoom + "/" + (tilePoint.x % countMax) + "/" + (tilePoint.y % countMax) + ".png"
+    img.src = "/201411300032.IR1.FULL.png-split/" + zoom + "/" + (tilePoint.x % countMax) + "/" + (tilePoint.y % countMax) + ".png"
     img.onload = function(){
         ctx.drawImage(img, 0, 0, 256, 256);
     };

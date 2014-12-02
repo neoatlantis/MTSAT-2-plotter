@@ -1,3 +1,5 @@
+define(['leaflet'], function(){
+//////////////////////////////////////////////////////////////////////////////
 L.Control.MousePosition = L.Control.extend({
   options: {
     position: 'bottomleft',
@@ -47,3 +49,5 @@ L.Map.addInitHook(function () {
 L.control.mousePosition = function (options) {
     return new L.Control.MousePosition(options);
 };
+//////////////////////////////////////////////////////////////////////////////
+});

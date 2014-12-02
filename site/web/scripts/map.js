@@ -60,6 +60,10 @@ function floatToDegree(f, latLng='lat'){
 function mapView(){
     var self = this;
 
+    // define map zoom range
+    var mapZoomMax = 6,
+        mapZoomMin = 4;
+
     // define map bounds
     var mapBounds = L.latLngBounds(
         L.latLng(-60.02, 85.02),
@@ -77,7 +81,7 @@ function mapView(){
     var map = L.map('map', {
         maxBounds: mapBounds,
         crs: L.CRS.EPSG4326,
-    }).setView([20.00, 140.00], 4);
+    }).setView(mapBounds.getCenter(), mapZoomMin);
 
     
     // add mouse position displayer to map
@@ -220,14 +224,23 @@ function mapView(){
 
 
     // show or hide a cloud atlas with given name
+    // - when `name` is not specified, will hide all drawn altases.
+    // - otherwise, the layer with given name will be shown, while the others
+    //   being hide.
 
-    var cloudAtlasLayers = {}, cloudAtlasLayersVisibility = {};
+    var cloudAtlasLayers = {};
     this.toggleCloudAtlas = function(name){
+        if(!name){
+            for(var i in cloudAtlasLayers)
+                map.removeLayer(cloudAtlasLayers[i]);
+            return;
+        };
+
         if(undefined == cloudAtlasLayers[name]){
             var tileURL = "/{name}/{z}/{x}/{y}.{f}";
             var canvasTiles = L.tileLayer.canvas({
-                maxZoom: 6,
-                minZoom: 3,
+                maxZoom: mapZoomMax,
+                minZoom: mapZoomMin,
                 attribution: mapAttribution,
             });
             canvasTiles.drawTile = function(canvas, tilePoint, zoom){
@@ -250,18 +263,16 @@ function mapView(){
                 };
             };
             cloudAtlasLayers[name] = canvasTiles;
-            cloudAtlasLayersVisibility[name] = false;
         } else {
             var canvasTiles = cloudAtlasLayers[name];
         };
 
-        var visibility = !Boolean(cloudAtlasLayersVisibility[name]);
-        cloudAtlasLayersVisibility[name] = visibility;
-        if(visibility)
-            canvasTiles.addTo(map);
-        else
-            canvasTiles.removeFrom(map);
-
+        for(var i in cloudAtlasLayers){
+            if(i == name)
+                cloudAtlasLayers[i].addTo(map);
+            else
+                map.removeLayer(cloudAtlasLayers[i]);
+        };
         return self;
     };
 
@@ -272,12 +283,12 @@ function mapView(){
         toggleGeoJSON('coastline', {
             'weight': '1.5px',
             'color': '#FFAA00',
-            'opacity': '1.0',
+            'opacity': '0.5',
         });
         toggleGeoJSON('boundaries', {
             'weight': '1.5px',
             'color': '#FF0000',
-            'opacity': '1.0',
+            'opacity': '0.5',
         });
         return self;
     };
@@ -286,7 +297,7 @@ function mapView(){
           'iconUrl': './static/images/toggle-regionlines.png',  // string
           'onClick': self.toggleRegionLines,  // callback function
           'hideText': true,  // bool
-          'maxWidth': 30,  // number
+          'maxWidth': 32,  // number
           'doToggle': false,  // bool
           'toggleStatus': false  // bool
     }   
@@ -333,7 +344,6 @@ mapViewInstance
     .toggleCloudAtlas('201411300032.IR1.FULL.png-split')
     .toggleRegionLines()
 ;
-
 
 //////////////////////////////////////////////////////////////////////////////
 return mapViewInstance;

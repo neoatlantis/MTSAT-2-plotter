@@ -6,6 +6,7 @@ require([
 
     'leaflet.mouseposition',
     'leaflet.draw',
+    'leaflet.button',
 ], function(
     $,
     L,
@@ -91,15 +92,15 @@ function mapView(){
 
 
     // geoJSON layer toggler
-
     var geoJSONLayers = {}, geoJSONLayersVisibility = {};
     function toggleGeoJSON(name, displayStyle){
         geoJSONLayersVisibility[name] = !Boolean(geoJSONLayersVisibility[name]);
         if(null == geoJSONLayers[name]){
             $.getJSON('./static/geojson/' + name + '.json', function(json){
-                geoJSONLayers[name] = L.geoJson(json, {
+                var geoJSON = L.geoJson(json, {
                     style: displayStyle
-                });
+                })
+                geoJSONLayers[name] = geoJSON;
                 if(geoJSONLayersVisibility[name])
                     geoJSONLayers[name].addTo(map);
             });
@@ -107,7 +108,7 @@ function mapView(){
             if(geoJSONLayersVisibility[name])
                 geoJSONLayers[name].addTo(map);
             else
-                geoJSONLayers[name].removeFrom(map);
+                map.removeLayer(geoJSONLayers[name]);
         };
     };
 
@@ -292,6 +293,19 @@ function mapView(){
         });
         return self;
     };
+
+    var buttonGraticulesTogglerOptions = {
+          'text': 'MyButton',  // string
+          'iconUrl': './static/images/marker-icon.png',  // string
+          'onClick': self.toggleGraticules,  // callback function
+          'hideText': true,  // bool
+          'maxWidth': 30,  // number
+          'doToggle': false,  // bool
+          'toggleStatus': false  // bool
+    }   
+    var buttonGraticulesToggler = new L.Control.Button(
+        buttonGraticulesTogglerOptions
+    ).addTo(map);
 
 
     return this;

@@ -37,16 +37,27 @@ L.control.mousePosition({
 
 var tileURL = "http://{s}.tile.osm.org/{z}/{x}/{y}.png";
 tileURL = "http://localhost:4001/201411300032.IR1.FULL.png-split/{z}/{x}/{y}.png";
-/*
-http://{s}.tile.osm.org/{z}/{x}/{y}.png
-*/
-L.tileLayer(tileURL, {
+
+
+var canvasTiles = L.tileLayer.canvas({
+    maxZoom: 6,
+    minZoom: 3,
     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> | ' +
         '<a href="http://www.cr.chiba-u.jp/english/">CEReS</a>, Chiba University | ' +
         '<a href="http://www.naturalearthdata.com/">Natural Earth</a>',
-    maxZoom: 6,
-    minZoom: 3,
-}).addTo(map);
+});
+canvasTiles.drawTile = function(canvas, tilePoint, zoom){
+    var countMax = 1 << zoom;
+    var ctx = canvas.getContext('2d');
+    // draw something on the tile canvas
+    var img = new Image();
+    img.src = "http://localhost:4001/201411300032.IR1.FULL.png-split/" + zoom + "/" + (tilePoint.x % countMax) + "/" + (tilePoint.y % countMax) + ".png"
+    img.onload = function(){
+        ctx.drawImage(img, 0, 0, 256, 256);
+    };
+};
+canvasTiles.addTo(map);
+
 
 
 $.getJSON('./static/geojson/coastline.json', function(json){
@@ -135,6 +146,10 @@ map.on('draw:created', function(e) {
 // when area edited
 map.on('draw:edited', function(e){
     e.layers.eachLayer(bindPopupToLayer);
+});
+
+// mouseevent
+map.on('mousemove', function(e){
 });
 
 //////////////////////////////////////////////////////////////////////////////

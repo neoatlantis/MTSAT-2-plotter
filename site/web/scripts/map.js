@@ -16,7 +16,7 @@ require([
 //////////////////////////////////////////////////////////////////////////////
 
 /* define some utilities */
-function floatToDegree(f, latLng='lat'){
+function floatToDegree(f, latLng){
     function twoDigits(x){return ((x>10)?String(x):'0' + String(x));};
     var str = '', negative=false;
     if('lat' == latLng){
@@ -373,7 +373,7 @@ function mapView(divID){
             return;
         };
 
-        if(undefined == cloudAtlasLayers[d12]){
+        if(undefined == cloudAtlasLayers[filename]){
             var tileURL = "/{name}/{z}/{x}/{y}.{f}";
             var canvasTiles = L.tileLayer.canvas({
                 maxZoom: mapZoomMax,
@@ -399,13 +399,13 @@ function mapView(divID){
                     ctx.drawImage(img, 0, 0, 256, 256);
                 };
             };
-            cloudAtlasLayers[name] = canvasTiles;
+            cloudAtlasLayers[filename] = canvasTiles;
         } else {
-            var canvasTiles = cloudAtlasLayers[name];
+            var canvasTiles = cloudAtlasLayers[filename];
         };
 
         for(var i in cloudAtlasLayers){
-            if(i == name)
+            if(i == filename)
                 cloudAtlasLayers[i].addTo(map);
             else
                 map.removeLayer(cloudAtlasLayers[i]);
@@ -486,7 +486,7 @@ function mapView(divID){
         if(dataDate < 0) dataDate = dataDateList.length - 1;
         if(dataDateList.length < 1){
             showStatus('datetime', '单击选取图像列表');
-            self.toggleCloudAtlas();
+            self.toggleCloudAtlas(false);
         } else {
             self.toggleCloudAtlas(dataDateList[dataDate]);
             showStatus('datetime', date12ToStr(dataDateList[dataDate]));
@@ -576,6 +576,7 @@ function mapView(divID){
         if(!changed) return;
         dataDateList = newList;
         dataDate = 0;
+        self.toggleCloudAtlas(false);
         updateCloudAtlas();
     };
 

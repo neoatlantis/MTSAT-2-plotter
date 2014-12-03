@@ -69,12 +69,15 @@ function mapView(divID){
         .append(
             $('<div>', {id: divID + '-status'}).addClass('map-status')
         )
+        .append(
+            $('<div>', {id: divID + '-menu'}).addClass('map-menu').hide()
+        )
     ;
 
     // auto resize adjustment
     function autoResizeAdjustment(){
         $('#' + divID + '-leaflet')
-            .css('height', ($(document).height() - 32) + 'px')
+            .css('height', ($(window).height() - 32) + 'px')
         ;
     };
     $(window).resize(autoResizeAdjustment);
@@ -140,7 +143,12 @@ function mapView(divID){
     };
 
     // status displayer outside the map
-    var statusList = ['dragging', 'graticules', 'regionlines'];
+    var statusList = [
+        'dragging',
+        'graticules',
+        'regionlines',
+        'datetime',
+    ];
     function showStatus(name, value){
         var parentSelector = '#' + divID + '-status',
             selector = parentSelector + ' [name="' + name + '"]';
@@ -150,15 +158,18 @@ function mapView(divID){
                     .addClass('map-status-box')
             );
         };
+        if(undefined === value) return $(selector);
 
         var text = '';
-        console.log(name)
         if('dragging' == name){
-            text += '拖动';
+            text += '鼠标拖动';
         } else if('graticules' == name){
             text += '经纬网';
         } else if('regionlines' == name){
             text += '地区边界';
+        } else if('datetime' == name){
+            text += new Date(value).toUTCString();
+            value = text;
         } else
             text = value;
 
@@ -173,7 +184,10 @@ function mapView(divID){
 
     /********************************************************************/
     /* Internal functions for controlling map */
+
+    var mapDraggingStatus = null;
     function mapDraggingEnabled(v){
+        mapDraggingStatus = v;
         showStatus('dragging', v);
         if(v)
             map.dragging.enable();
@@ -181,7 +195,6 @@ function mapView(divID){
             map.dragging.disable();
     };
     mapDraggingEnabled(true);
-            
 
 
     /********************************************************************/
@@ -371,19 +384,6 @@ function mapView(divID){
         showStatus('regionlines', s1 || s2);
         return self;
     };
-    var buttonRegionLinesTogglerOptions = {
-          'text': '', //'MyButton',  // string
-          'iconUrl': './static/images/toggle-regionlines.png',  // string
-          'onClick': self.toggleRegionLines,  // callback function
-          'hideText': true,  // bool
-          'maxWidth': 32,  // number
-          'doToggle': false,  // bool
-          'toggleStatus': false  // bool
-    }   
-    var buttonRegionLinesToggler = new L.Control.Button(
-        buttonRegionLinesTogglerOptions
-    ).addTo(map);
-
 
     // show or hide graticules
 
@@ -396,19 +396,29 @@ function mapView(divID){
         showStatus('graticules', s);
         return self;
     };
-    var buttonGraticulesTogglerOptions = {
-          'text': '', //'MyButton',  // string
-          'iconUrl': './static/images/toggle-graticules.png',  // string
-          'onClick': self.toggleGraticules,  // callback function
-          'hideText': true,  // bool
-          'maxWidth': 32,  // number
-          'doToggle': false,  // bool
-          'toggleStatus': false  // bool
-    }   
-    var buttonGraticulesToggler = new L.Control.Button(
-        buttonGraticulesTogglerOptions
-    ).addTo(map);
 
+
+    // enable or disable mouse map dragging
+    self.toggleMapDragging = function(){
+        mapDraggingEnabled(!mapDraggingStatus);
+    };
+
+
+    // show or hide menu for selecting layer
+    self.toggleMenu = function(){
+        $('#' + divID + '-menu')
+            .toggle()
+//            .css('bottom', $('#' + divID + '-status').css('height'))
+//            .css('right', '0px')
+        ;
+    };
+
+
+    // bind mouse events to status bars
+    showStatus('dragging').addClass('map-status-not-link');
+    showStatus('datetime').click(self.toggleMenu);
+    showStatus('graticules').click(self.toggleGraticules);
+    showStatus('regionlines').click(self.toggleRegionLines);
 
     return this;
 };

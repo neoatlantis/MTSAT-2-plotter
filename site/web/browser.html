@@ -29,9 +29,7 @@
             padding: 0px;
             margin: 0px;
         }
-        .hidden{
-            display: none;
-        }
+
         .button-date{
             background: #CCCCFF;
             border-color: #000000;
@@ -40,13 +38,6 @@
         }
         .button-date-showing{
             background: #CCFFCC;
-        }
-
-        #interface,#status{
-            display: none;
-            float:left;
-            padding-left: 10px;
-            width: 20%;
         }
 
         .leaflet-container .leaflet-control-mouseposition {
@@ -64,8 +55,7 @@
 
         .map-status-box {
             display: inline-block;
-            border: #AAAAAA 2px ridge;
-            background-color: #AAAAAA;
+            border: #999999 2px ridge;
             color: #000000;
             font-size: 11pt;
             height: 28px;
@@ -75,51 +65,41 @@
         }
 
         .map-status {
-            background-color: #AAAAAA;
+            background-color: #999999;
             padding: 0px;
             height: 32px;
             text-align: right;
+            cursor: pointer;
         }
 
         .map-status-disabled {
             color: #666666;
         }
+
+        .map-status-not-link {
+            cursor: not-allowed;
+        }
+
+        .map-menu{
+            position: fixed;
+            bottom: 32px;
+            right: 0px;
+            z-index: 99999999;
+            background-color: #999999;
+            padding: 3px;
+            border: #999999 2px ridge;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            max-height: 60%;
+        }
+
+        .map-menu-item{
+            padding: 3px;
+            width: 20em;
+        }
     </style>
 </head>
 <body>
-    <div class="hidden">
-        <canvas id="imgLoadCache"></canvas>
-        <canvas id="imgCropCache"></canvas>
-    </div>
-
-    <div id="interface">
-        <div>
-            <strong>通道</strong><br />
-            <select name="view-channel">
-                <option value="IR1">IR1</option>
-                <option value="IR2">IR2</option>
-                <option value="IR3">IR3</option>
-                <option value="IR4">IR4</option>
-                <option value="VIS" disabled>VIS</option>
-            </select>
-        </div>
-        <div>
-            <strong>日期范围</strong><br />
-            <input type="text" name="view-date-range-start" placeholder="YYYYMMDD" maxlength="8" size="8"/>
-            到
-            <input type="text" name="view-date-range-end" placeholder="YYYYMMDD" maxlength="8" size="8"/>
-        </div>
-        <div>
-            <strong>数据范围</strong><br />
-            <input type="checkbox" name="view-data-north" checked/>北半球
-            <input type="checkbox" name="view-data-south" checked/>南半球
-        </div>
-        <button id="list-data" type="button">更新</button>
-
-        <div name="data-list">
-        </div>
-    </div>
-
     <div id="map"></div>
 </body>
 </html>

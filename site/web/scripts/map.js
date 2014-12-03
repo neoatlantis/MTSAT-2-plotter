@@ -1,4 +1,4 @@
-require([
+define([
     'jquery',
     'leaflet',
     'gis.area',
@@ -6,7 +6,6 @@ require([
 
     'leaflet.mouseposition',
     'leaflet.draw',
-    'leaflet.button',
 ], function(
     $,
     L,
@@ -595,17 +594,6 @@ function mapView(divID){
 };
 
 
-
-
-
-
-var mapViewInstance = new mapView('map');
-
-mapViewInstance.assignList([
-    '201411300032.IR1.FULL.png-split',
-    '201301150132.IR1.FULL.png-split',
-]);
-
 //////////////////////////////////////////////////////////////////////////////
-return mapViewInstance;
+return mapView;
 });

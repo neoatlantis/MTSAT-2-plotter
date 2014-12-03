@@ -152,11 +152,25 @@ function mapView(divID){
     function showStatus(name, value){
         var parentSelector = '#' + divID + '-status',
             selector = parentSelector + ' [name="' + name + '"]';
-        if($(selector).length < 1){
-            $(parentSelector).append(
-                $('<div>', {name: name})
-                    .addClass('map-status-box')
-            );
+        if($(selector).length < 1 && statusList.indexOf(name) >= 0){
+            if('datetime' == name){
+                $('<div>')
+                    .append(
+                        $('<span>', {name: 'datetime-prev'}).html('&#9664; ')
+                    )
+                    .append(
+                        $('<span>', {name: 'datetime'})
+                    )
+                    .append(
+                        $('<span>', {name: 'datetime-next'}).html(' &#9654;')
+                    )
+                .addClass('map-status-box')
+                .appendTo(parentSelector);
+            } else
+                $(parentSelector).append(
+                    $('<div>', {name: name})
+                        .addClass('map-status-box')
+                );
         };
         if(undefined === value) return $(selector);
 
@@ -168,10 +182,8 @@ function mapView(divID){
         } else if('regionlines' == name){
             text += '地区边界';
         } else if('datetime' == name){
-            text += '◀ ';
             text += new Date(value).toUTCString();
-            text += ' ▶';
-            value = text;
+            value = '';
         } else
             text = value;
 
@@ -418,9 +430,10 @@ function mapView(divID){
 
     // bind mouse events to status bars
     showStatus('dragging').addClass('map-status-not-link');
-    showStatus('datetime').click(self.toggleMenu);
     showStatus('graticules').click(self.toggleGraticules);
     showStatus('regionlines').click(self.toggleRegionLines);
+    showStatus('datetime').click(self.toggleMenu);
+    showStatus('datetime-next').click(function(){alert('prev');});
 
     return this;
 };

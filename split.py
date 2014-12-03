@@ -24,7 +24,7 @@ def splitter(p, fn, img=None):
         img = Image.open(fileFullName)
         print "> Read in image."
 
-    for zoomLevel in xrange(3, 7):
+    for zoomLevel in xrange(4, 7):
         count = (1 << zoomLevel)
         gridDegreeX = 360.0 / count
         gridDegreeY = 360.0 / count

@@ -213,6 +213,16 @@ function mapView(){
         e.layers.eachLayer(bindPopupToLayer);
     });
 
+    // when draw begins, stop dragging
+    map.on('draw:drawstart', function(){
+        map.dragging.disable();
+    })
+
+    // when draw ends, resume dragging
+    map.on('draw:drawstop', function(){
+        map.dragging.enable();
+    });
+
     // mouseevent
     map.on('mousemove', function(e){
     });
@@ -342,6 +352,7 @@ var mapViewInstance = new mapView();
 
 mapViewInstance
     .toggleCloudAtlas('201411300032.IR1.FULL.png-split')
+    .toggleCloudAtlas('201301150132.IR1.FULL.png-split')
     .toggleRegionLines()
 ;
 

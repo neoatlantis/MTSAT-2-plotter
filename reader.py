@@ -113,8 +113,8 @@ for each in geossFile:
     #img = p.plotCoordinate(img)
 
     imgSavePath = os.path.join(outputPath, filename)
-    img.save(imgSavePath)
-    print ">>> Image saved to: %s\n" % filename
+#    img.save(imgSavePath)
+#    print ">>> Image saved to: %s\n" % filename
 
     print "> Splitting image for map viewer..."
     try:

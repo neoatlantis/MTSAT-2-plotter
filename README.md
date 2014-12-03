@@ -13,7 +13,6 @@ This is a system for:
 0. instructing the browser to display the recent updates with a single web
    page. There is a web viewer developed basing on `leaflet.js`, which
    provides an easy interface to:
-
     * display images at different time points;
     * switch between channels(IR1-IR4);
     * dynamically add/remove coastlines, graticules to/from the image;

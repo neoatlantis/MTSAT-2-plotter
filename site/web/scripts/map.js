@@ -55,6 +55,18 @@ function floatToDegree(f, latLng='lat'){
     return str;
 };
 
+function date12ToStr(d12){
+    return String(
+        d12.slice(0,4) + '年' + 
+        d12.slice(4,6) + '月' +
+        d12.slice(6,8) + '日' +
+        ' ' +
+        d12.slice(8,10) + ':' +
+        d12.slice(10,12) +
+        ' UTC'
+    );
+};
+
 /****************************************************************************/
 
 function mapView(divID){
@@ -63,7 +75,8 @@ function mapView(divID){
     var dataChannelList = ['IR1', 'IR2', 'IR3', 'IR4'],
         dataChannel = 0,
         dataDateList = [],
-        dataDate = 0;
+        dataDate = 0,
+        dataFileName = {};
 
     // create div for map region
     $('#' + divID)
@@ -132,7 +145,7 @@ function mapView(divID){
         if(null == geoJSONLayers[name]){
             $.getJSON('./static/geojson/' + name + '.json', function(json){
                 var geoJSON = L.geoJson(json, {
-                    style: displayStyle
+                    style: displayStyle,
                 })
                 geoJSONLayers[name] = geoJSON;
                 if(geoJSONLayersVisibility[name])
@@ -189,7 +202,7 @@ function mapView(divID){
         } else if('regionlines' == name){
             text += '地区边界';
         } else if('datetime' == name){
-            text += new Date(value).toUTCString();
+            text += value;
             value = null;
         } else if('channel' == name){
             text += '通道 ' + dataChannelList[dataChannel];
@@ -344,14 +357,23 @@ function mapView(divID){
     //   being hide.
 
     var cloudAtlasLayers = {};
-    this.toggleCloudAtlas = function(name){
-        if(!name){
+    this.toggleCloudAtlas = function(d12){
+        var filename = dataFileName[d12], 
+            channel = dataChannelList[dataChannel];
+
+        if(filename){
+            filename = filename[channel];
+            if(!filename)
+                filename = false;
+        };
+
+        if(!d12 || !filename){
             for(var i in cloudAtlasLayers)
                 map.removeLayer(cloudAtlasLayers[i]);
             return;
         };
 
-        if(undefined == cloudAtlasLayers[name]){
+        if(undefined == cloudAtlasLayers[d12]){
             var tileURL = "/{name}/{z}/{x}/{y}.{f}";
             var canvasTiles = L.tileLayer.canvas({
                 maxZoom: mapZoomMax,
@@ -366,7 +388,7 @@ function mapView(divID){
                 var img = new Image();
                 var imgFormat = ((zoom <= 5)?'jpg':'png');
                 var url = tileURL
-                    .replace('{name}', name)
+                    .replace('{name}', filename)
                     .replace('{z}', String(zoom))
                     .replace('{x}', String(tilePoint.x % countMax))
                     .replace('{y}', String(tilePoint.y % countMax))
@@ -429,8 +451,23 @@ function mapView(divID){
 
 
     // show or hide menu for selecting layer
-    self.toggleMenu = function(){
-        $('#' + divID + '-menu').toggle();
+    var menuStatus = false;
+    self.toggleMenu = function(forceStatus){
+        var target = $('#' + divID + '-menu');
+        if(true === forceStatus){
+            menuStatus = true;
+            target.show();
+        } else if(false === forceStatus){
+            menuStatus = false;
+            target.hide();
+        } else {
+            menuStatus = !menuStatus;
+            if(menuStatus)
+                target.show();
+            else
+                target.hide();
+        };
+        return menuStatus;
     };
 
     // bind mouse events to status bars
@@ -444,31 +481,112 @@ function mapView(divID){
 
 /*        dataDateList = [],
         dataDate = 0;*/
-    function updateTileLayers(){
-        var channelName = dataChannelList[dataChannel];
+    function updateCloudAtlas(){
+        if(dataDate >= dataDateList.length) dataDate = 0;
+        if(dataDate < 0) dataDate = dataDateList.length - 1;
+        if(dataDateList.length < 1){
+            showStatus('datetime', '单击选取图像列表');
+            self.toggleCloudAtlas();
+        } else {
+            self.toggleCloudAtlas(dataDateList[dataDate]);
+            showStatus('datetime', date12ToStr(dataDateList[dataDate]));
+        };
     };
 
-    showStatus('datetime').click(self.toggleMenu);
+    $('#' + divID + '-menu').click(function(e){
+        e.stopPropagation();
+    });
+    showStatus('datetime').click(function(e){
+        self.toggleMenu();
+        e.stopPropagation();
+    });
+    showStatus('datetime', '等待图像列表');
     showStatus('datetime-next').click(function(){
         dataDate += 1;
-        if(dataDate >= dataDateList.length) dataDate = 0;
-        updateTileLayers();
+        updateCloudAtlas();
     });
     showStatus('datetime-prev').click(function(){
         dataDate -= 1;
-        if(dataDate < 0) dataDate = dataDateList.length - 1;
-        updateTileLayers();
+        updateCloudAtlas();
     });
     
     showStatus('channel').click(function(){
         dataChannel = (dataChannel + 1) % dataChannelList.length;
         showStatus('channel', dataChannel);
+        updateCloudAtlas();
     });
 
     self.assignList = function(list){
         var menuDiv = $('#' + divID + '-menu').empty();
-        
+        var dateStrList = [], exec, d12, channel, i, j;
+        for(i in list){
+            exec = /([0-9]{12})/.exec(list[i]);
+            if(!exec) continue;
+            d12 = exec[1];
+            channel = false;
+            for(j=0; j<dataChannelList.length; j++){
+                if(list[i].indexOf(dataChannelList[j]) >= 0){
+                    channel = dataChannelList[j];
+                    break;
+                };
+            };
+            if(false === channel) continue;
+            if(!dataFileName[d12]) dataFileName[d12] = {};
+            dataFileName[d12][channel] = list[i];
+        };
+
+        for(var i in dataFileName) dateStrList.push(i);
+        dateStrList.sort();
+
+        for(var i=0; i<dateStrList.length; i++){
+            menuDiv.append($('<div>')
+                .append(
+                    $('<input>', {
+                        'type': 'checkbox',
+                        'id': 'menu-' + dateStrList[i],
+                        'value': dateStrList[i],
+                    })
+                )
+                .append(
+                    $('<label>', {'for': 'menu-' + dateStrList[i]})
+                        .text(date12ToStr(dateStrList[i]))
+                )
+                .addClass('map-menu-item')
+            );
+        };
     };
+
+    function menuListChanged(){
+        var newList = [];
+        $('#' + divID + '-menu input:checked').each(function(){
+            newList.push($(this).val());
+        });
+        newList.sort();
+
+        var changed = false;
+        if(dataDateList.length != newList.length)
+            changed = true;
+        else {
+            for(var i=0; i<newList.length; i++)
+                if(newList[i] != dataDateList[i]){
+                    changed = true;
+                    break;
+                };
+        };
+        if(!changed) return;
+        dataDateList = newList;
+        dataDate = 0;
+        updateCloudAtlas();
+    };
+
+    $('body').click(function(){
+        if(menuStatus){
+            self.toggleMenu(false);
+            menuListChanged();
+        };
+    });
+
+    updateCloudAtlas();
 
 
 
@@ -482,11 +600,10 @@ function mapView(divID){
 
 var mapViewInstance = new mapView('map');
 
-mapViewInstance
-    .toggleCloudAtlas('201411300032.IR1.FULL.png-split')
-    .toggleCloudAtlas('201301150132.IR1.FULL.png-split')
-//    .toggleRegionLines()
-;
+mapViewInstance.assignList([
+    '201411300032.IR1.FULL.png-split',
+    '201301150132.IR1.FULL.png-split',
+]);
 
 //////////////////////////////////////////////////////////////////////////////
 return mapViewInstance;

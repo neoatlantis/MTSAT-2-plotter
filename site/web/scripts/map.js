@@ -57,8 +57,20 @@ function floatToDegree(f, latLng='lat'){
 
 /****************************************************************************/
 
-function mapView(){
+function mapView(divID){
     var self = this;
+
+    // create div for map region
+    $('#' + divID)
+        .empty()
+        .append(
+            $('<div>', {id: divID + '-leaflet'})
+                .css('height', '500px')
+        )
+        .append(
+            $('<div>', {id: divID + '-status'})
+        )
+    ;
 
     // define map zoom range
     var mapZoomMax = 6,
@@ -78,7 +90,7 @@ function mapView(){
     ;
 
     // initialize the map instance
-    var map = L.map('map', {
+    var map = L.map(divID + '-leaflet', {
         maxBounds: mapBounds,
         crs: L.CRS.EPSG4326,
     }).setView(mapBounds.getCenter(), mapZoomMin);
@@ -115,6 +127,13 @@ function mapView(){
                 map.removeLayer(geoJSONLayers[name]);
         };
     };
+
+    // status displayer outside the map
+    function showStatus(name, value, options){
+        var selector = '#' + divID + '-status';
+
+    };
+
 
     /********************************************************************/
     /* add drawing and measuring abilities to the map */
@@ -348,7 +367,7 @@ function mapView(){
 
 
 
-var mapViewInstance = new mapView();
+var mapViewInstance = new mapView('map');
 
 mapViewInstance
     .toggleCloudAtlas('201411300032.IR1.FULL.png-split')

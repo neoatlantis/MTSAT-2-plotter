@@ -65,12 +65,22 @@ function mapView(divID){
         .empty()
         .append(
             $('<div>', {id: divID + '-leaflet'})
-                .css('height', '500px')
         )
         .append(
-            $('<div>', {id: divID + '-status'})
+            $('<div>', {id: divID + '-status'}).addClass('map-status')
         )
     ;
+
+    // auto resize adjustment
+    function autoResizeAdjustment(){
+        $('#' + divID + '-leaflet')
+            .css('height', ($(document).height() - 32) + 'px')
+        ;
+    };
+    $(window).resize(autoResizeAdjustment);
+    $(document).resize(autoResizeAdjustment);
+    autoResizeAdjustment();
+
 
     // define map zoom range
     var mapZoomMax = 6,
@@ -126,13 +136,52 @@ function mapView(divID){
             else
                 map.removeLayer(geoJSONLayers[name]);
         };
+        return geoJSONLayersVisibility[name];
     };
 
     // status displayer outside the map
-    function showStatus(name, value, options){
-        var selector = '#' + divID + '-status';
+    var statusList = ['dragging', 'graticules', 'regionlines'];
+    function showStatus(name, value){
+        var parentSelector = '#' + divID + '-status',
+            selector = parentSelector + ' [name="' + name + '"]';
+        if($(selector).length < 1){
+            $(parentSelector).append(
+                $('<div>', {name: name})
+                    .addClass('map-status-box')
+            );
+        };
 
+        var text = '';
+        console.log(name)
+        if('dragging' == name){
+            text += '拖动';
+        } else if('graticules' == name){
+            text += '经纬网';
+        } else if('regionlines' == name){
+            text += '地区边界';
+        } else
+            text = value;
+
+        if(true === value)
+            $(selector).removeClass('map-status-disabled');
+        else if(false === value)
+            $(selector).addClass('map-status-disabled');
+
+        $(selector).text(text);
     };
+    for(var i=0; i<statusList.length; i++) showStatus(statusList[i], false);
+
+    /********************************************************************/
+    /* Internal functions for controlling map */
+    function mapDraggingEnabled(v){
+        showStatus('dragging', v);
+        if(v)
+            map.dragging.enable();
+        else
+            map.dragging.disable();
+    };
+    mapDraggingEnabled(true);
+            
 
 
     /********************************************************************/
@@ -234,12 +283,12 @@ function mapView(divID){
 
     // when draw begins, stop dragging
     map.on('draw:drawstart', function(){
-        map.dragging.disable();
+        mapDraggingEnabled(false);
     })
 
     // when draw ends, resume dragging
     map.on('draw:drawstop', function(){
-        map.dragging.enable();
+        mapDraggingEnabled(true);
     });
 
     // mouseevent
@@ -309,16 +358,17 @@ function mapView(divID){
     // show or hide region lines
     
     this.toggleRegionLines = function(){
-        toggleGeoJSON('coastline', {
+        var s1 = toggleGeoJSON('coastline', {
             'weight': '1.5px',
             'color': '#FFAA00',
             'opacity': '0.5',
         });
-        toggleGeoJSON('boundaries', {
+        var s2 = toggleGeoJSON('boundaries', {
             'weight': '1.5px',
             'color': '#FF0000',
             'opacity': '0.5',
         });
+        showStatus('regionlines', s1 || s2);
         return self;
     };
     var buttonRegionLinesTogglerOptions = {
@@ -338,11 +388,12 @@ function mapView(divID){
     // show or hide graticules
 
     this.toggleGraticules = function(){
-        toggleGeoJSON('graticules', {
+        var s = toggleGeoJSON('graticules', {
             'weight': '1.5px',
             'color': '#FFAA00',
             'opacity': '1.0',
         });
+        showStatus('graticules', s);
         return self;
     };
     var buttonGraticulesTogglerOptions = {

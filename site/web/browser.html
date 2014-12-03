@@ -25,6 +25,9 @@
     <style> 
         body{
             font-size: 11pt;
+            background-color: #000000;
+            padding: 0px;
+            margin: 0px;
         }
         .hidden{
             display: none;
@@ -40,6 +43,7 @@
         }
 
         #interface,#status{
+            display: none;
             float:left;
             padding-left: 10px;
             width: 20%;
@@ -56,6 +60,29 @@
 
         .leaflet-clickable,.leaflet-container {
             cursor: crosshair !important;
+        }
+
+        .map-status-box {
+            display: inline-block;
+            border: #AAAAAA 2px ridge;
+            background-color: #AAAAAA;
+            color: #000000;
+            font-size: 11pt;
+            height: 28px;
+            line-height: 28px;
+            padding-left: 0.5em;
+            padding-right: 0.5em;
+        }
+
+        .map-status {
+            background-color: #AAAAAA;
+            padding: 0px;
+            height: 32px;
+            text-align: right;
+        }
+
+        .map-status-disabled {
+            color: #666666;
         }
     </style>
 </head>

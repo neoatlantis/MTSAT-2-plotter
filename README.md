@@ -1,5 +1,5 @@
-MTSAT-2 Satellite Dataset Retrive, Plot and Display
-===================================================
+MTSAT-2 Satellite Dataset Retrieving, Plotting and Displaying
+=============================================================
 
 This is a system for:
     0. retrieving datasets from `ftp://mtsat-1r.cr.chiba-u.ac.jp` regularly.

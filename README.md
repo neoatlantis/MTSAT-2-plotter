@@ -2,6 +2,7 @@ MTSAT-2 Satellite Dataset Retrieving, Plotting and Displaying
 =============================================================
 
 This is a system for:
+
     0. retrieving datasets from `ftp://mtsat-1r.cr.chiba-u.ac.jp` regularly.
     0. plotting retrieved data into images using configurable color
        scales(currently IR-COLOR used by NRL) and generate color palatted PNG
@@ -12,6 +13,7 @@ This is a system for:
     0. instructing the browser to display the recent updates with a single web
        page. There is a web viewer developed basing on `leaflet.js`, which
        provides an easy interface to:
+
             * display images at different time points;
             * switch between channels(IR1-IR4);
             * dynamically add/remove coastlines, graticules to/from the image;

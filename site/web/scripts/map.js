@@ -60,6 +60,9 @@ function floatToDegree(f, latLng='lat'){
 function mapView(divID){
     var self = this;
 
+    var dataChannelList = ['IR1', 'IR2', 'IR3', 'IR4'],
+        dataChannel = 0;
+
     // create div for map region
     $('#' + divID)
         .empty()
@@ -147,11 +150,13 @@ function mapView(divID){
         'dragging',
         'graticules',
         'regionlines',
+        'channel',
         'datetime',
     ];
     function showStatus(name, value){
         var parentSelector = '#' + divID + '-status',
             selector = parentSelector + ' [name="' + name + '"]';
+
         if($(selector).length < 1 && statusList.indexOf(name) >= 0){
             if('datetime' == name){
                 $('<div>')
@@ -183,7 +188,10 @@ function mapView(divID){
             text += '地区边界';
         } else if('datetime' == name){
             text += new Date(value).toUTCString();
-            value = '';
+            value = null;
+        } else if('channel' == name){
+            text += '通道 ' + dataChannelList[dataChannel];
+            value = null;
         } else
             text = value;
 
@@ -434,6 +442,11 @@ function mapView(divID){
     showStatus('regionlines').click(self.toggleRegionLines);
     showStatus('datetime').click(self.toggleMenu);
     showStatus('datetime-next').click(function(){alert('prev');});
+    
+    showStatus('channel').click(function(){
+        dataChannel = (dataChannel + 1) % dataChannelList.length;
+        showStatus('channel', dataChannel);
+    });
 
     return this;
 };

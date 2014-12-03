@@ -61,7 +61,9 @@ function mapView(divID){
     var self = this;
 
     var dataChannelList = ['IR1', 'IR2', 'IR3', 'IR4'],
-        dataChannel = 0;
+        dataChannel = 0,
+        dataDateList = [],
+        dataDate = 0;
 
     // create div for map region
     $('#' + divID)
@@ -428,25 +430,47 @@ function mapView(divID){
 
     // show or hide menu for selecting layer
     self.toggleMenu = function(){
-        $('#' + divID + '-menu')
-            .toggle()
-//            .css('bottom', $('#' + divID + '-status').css('height'))
-//            .css('right', '0px')
-        ;
+        $('#' + divID + '-menu').toggle();
     };
-
 
     // bind mouse events to status bars
     showStatus('dragging').addClass('map-status-not-link');
     showStatus('graticules').click(self.toggleGraticules);
     showStatus('regionlines').click(self.toggleRegionLines);
+
+    
+    /********************************************************************/
+    /* Data Source assign and navigation */
+
+/*        dataDateList = [],
+        dataDate = 0;*/
+    function updateTileLayers(){
+        var channelName = dataChannelList[dataChannel];
+    };
+
     showStatus('datetime').click(self.toggleMenu);
-    showStatus('datetime-next').click(function(){alert('prev');});
+    showStatus('datetime-next').click(function(){
+        dataDate += 1;
+        if(dataDate >= dataDateList.length) dataDate = 0;
+        updateTileLayers();
+    });
+    showStatus('datetime-prev').click(function(){
+        dataDate -= 1;
+        if(dataDate < 0) dataDate = dataDateList.length - 1;
+        updateTileLayers();
+    });
     
     showStatus('channel').click(function(){
         dataChannel = (dataChannel + 1) % dataChannelList.length;
         showStatus('channel', dataChannel);
     });
+
+    self.assignList = function(list){
+        var menuDiv = $('#' + divID + '-menu').empty();
+        
+    };
+
+
 
     return this;
 };
@@ -461,7 +485,7 @@ var mapViewInstance = new mapView('map');
 mapViewInstance
     .toggleCloudAtlas('201411300032.IR1.FULL.png-split')
     .toggleCloudAtlas('201301150132.IR1.FULL.png-split')
-    .toggleRegionLines()
+//    .toggleRegionLines()
 ;
 
 //////////////////////////////////////////////////////////////////////////////

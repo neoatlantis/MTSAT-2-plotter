@@ -168,7 +168,9 @@ function mapView(divID){
         } else if('regionlines' == name){
             text += '地区边界';
         } else if('datetime' == name){
+            text += '◀ ';
             text += new Date(value).toUTCString();
+            text += ' ▶';
             value = text;
         } else
             text = value;
@@ -178,7 +180,7 @@ function mapView(divID){
         else if(false === value)
             $(selector).addClass('map-status-disabled');
 
-        $(selector).text(text);
+        $(selector).html(text);
     };
     for(var i=0; i<statusList.length; i++) showStatus(statusList[i], false);
 

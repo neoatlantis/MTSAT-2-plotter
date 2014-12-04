@@ -23,7 +23,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 #from plotconfig import cropLatN, cropLatS, cropLngDiffW, cropLngDiffE
 import shapefile
 import converter
-from colorscale import IR_COLOR as COLORSCALE
+from colorscale import Grayscale as COLORSCALE
 ##############################################################################
 
 class plotter:

@@ -3,6 +3,7 @@ define([
     'leaflet',
     'gis.area',
     'gis.length',
+    'map.colorscale',
 
     'leaflet.mouseposition',
     'leaflet.draw',
@@ -10,7 +11,8 @@ define([
     $,
     L,
     getGeoJSONArea,
-    getGeoJSONLength
+    getGeoJSONLength,
+    colorscale
 ){
 //////////////////////////////////////////////////////////////////////////////
 
@@ -407,6 +409,9 @@ function mapView(divID){
                 img.src = url; 
                 img.onload = function(){
                     ctx.drawImage(img, 0, 0, 256, 256);
+                    var imgdata = ctx.getImageData(0, 0, 256, 256);
+                    colorscale['IR-COLOR'](imgdata.data);
+                    ctx.putImageData(imgdata, 0, 0);
                 };
             };
             cloudAtlasLayers[filename] = canvasTiles;

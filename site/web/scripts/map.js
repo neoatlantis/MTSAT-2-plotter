@@ -450,13 +450,13 @@ function mapView(divID){
     this.toggleRegionLines = function(){
         var s1 = toggleGeoJSON('coastline', {
             'weight': '1.5px',
-            'color': '#FFAA00',
-            'opacity': '0.5',
+            'color': '#FF0000',
+            'opacity': '0.8',
         });
         var s2 = toggleGeoJSON('boundaries', {
             'weight': '1.5px',
             'color': '#FF0000',
-            'opacity': '0.5',
+            'opacity': '0.8',
         });
         showStatus('regionlines', s1 || s2);
         return self;

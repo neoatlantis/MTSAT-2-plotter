@@ -73,7 +73,7 @@ function date12ToStr(d12){
 function mapView(divID){
     var self = this;
 
-    var dataChannelList = ['IR1', 'IR2', 'IR3', 'IR4'],
+    var dataChannelList = ['IR1', 'IR3'],
         dataChannel = 0,
         dataDateList = [],
         dataDate = 0,
@@ -413,9 +413,20 @@ function mapView(divID){
                 ;
                 img.src = url; 
                 img.onload = function(){
+                    var colorscaleName;
+
                     ctx.drawImage(img, 0, 0, 256, 256);
+                    if(!dataColorify)
+                        colorscaleName = 'GREY';
+                    else {
+                        if('IR3' == dataChannelList[dataChannel])
+                            colorscaleName = 'IR-WV';
+                        else
+                            colorscaleName = 'IR-COLOR';
+                    };
+
                     var imgdata = ctx.getImageData(0, 0, 256, 256);
-                    colorscale['IR-COLOR'](imgdata.data);
+                    colorscale[colorscaleName](imgdata.data);
                     ctx.putImageData(imgdata, 0, 0);
                 };
             };
@@ -473,6 +484,8 @@ function mapView(divID){
     self.toggleColorify = function(){
         dataColorify = !dataColorify;
         showStatus('colorify', dataColorify);
+        clearCloudAtlasCache();
+        updateCloudAtlas();
     };
 
 
@@ -516,6 +529,10 @@ function mapView(divID){
             self.toggleCloudAtlas(dataDateList[dataDate]);
             showStatus('datetime', date12ToStr(dataDateList[dataDate]));
         };
+    };
+
+    function clearCloudAtlasCache(){
+        self.toggleCloudAtlas(false);
     };
 
     $('#' + divID + '-menu').click(function(e){

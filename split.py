@@ -9,7 +9,7 @@ from PIL import Image
 from plotconfig import splitXInc, splitYInc
 
 
-def splitter(p, fn, img=None):
+def splitter(p, fn, img=None, maxZoom=7):
     try:
         fileFullName = os.path.realpath(fn)
     except:
@@ -24,7 +24,7 @@ def splitter(p, fn, img=None):
         img = Image.open(fileFullName)
         print "> Read in image."
 
-    for zoomLevel in xrange(4, 7):
+    for zoomLevel in xrange(4, maxZoom + 1):
         count = (1 << zoomLevel)
         gridDegreeX = 360.0 / count
         gridDegreeY = 360.0 / count
@@ -52,13 +52,13 @@ def splitter(p, fn, img=None):
                 try:
                     crop = p.cropAndResize(img, (cropN, cropW, cropS, cropE))
                 except:
-                    print (cropN, cropW, cropS, cropE)
+#                   print (cropN, cropW, cropS, cropE)
                     continue
                 if not crop:
                     continue
 
                 imgFormat = '.png'
-                if zoomLevel <= 5:
+                if zoomLevel <= maxZoom - 1:
                     crop = crop.convert("RGB")
                     imgFormat = '.jpg'
 

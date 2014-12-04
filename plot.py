@@ -19,11 +19,8 @@ import array
 import math
 from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 
-#from plotconfig import drawData, drawCoastline, projectionMethod, markRegion
-#from plotconfig import cropLatN, cropLatS, cropLngDiffW, cropLngDiffE
 import shapefile
 import converter
-from colorscale import Grayscale as COLORSCALE
 ##############################################################################
 
 class plotter:
@@ -90,9 +87,8 @@ class plotter:
     def setDataResolution(self, latRes, lngRes):
         self.dataResolution = (latRes, lngRes) # deltaLat, deltaLng
 
-    def setScaleParameters(self, inverted, unit):
-        self.colorScaleInverted = inverted
-        self.colorScaleUnit = unit
+    def setColorScale(self, colorScale):
+        self.colorScale = colorScale;
 
     def _getPaintColor(self, uint16):
         # Convert the satellite result, which is Uint16, into Uint8 gray scale
@@ -101,7 +97,7 @@ class plotter:
         return self.lookupTable[uint16]
 
     def __getColorScale(self, value):
-        return COLORSCALE.getPaletteColor(value)
+        return self.colorScale.getPaletteColor(value)
 
     def __withinSourceRegion(self, lat, lng):   
         srcLatN, srcLngW, srcLatS, srcLngE = self.sourceRegion
@@ -133,7 +129,7 @@ class plotter:
         # maxGray, minGray = extremeValues
 
         imgP = Image.fromstring('P', self.dataDimension, imgPStr)
-        imgP.putpalette(COLORSCALE.PALETTE)
+        imgP.putpalette(self.colorScale.PALETTE)
         return imgP
 
     def _lineColor(self, imgDraw, lat1, lng1, lat2, lng2, color, bold):
@@ -260,7 +256,7 @@ class plotter:
         cropImage = img.crop((pointL, pointT, pointR, pointB))
         newImage.paste(cropImage, (pasteX, pasteY))
         newImage = newImage.resize((outW, outH))
-        newImage.putpalette(COLORSCALE.PALETTE)
+        newImage.putpalette(self.colorScale.PALETTE)
         return newImage
         
         
@@ -402,11 +398,12 @@ if __name__ == '__main__':
     1023:=130.02
     65535:=130.02
     """
+    from colorscale import Grayscale as COLORSCALE_IR
 
     source = open('testdata/sample.geoss', 'r').read()
 
     p = plotter()
-    p.setScaleParameters(True, 'K')
+    p.setColorScale(COLORSCALE_IR)
     p.setConvertTable(convert)
     p.setSourceRegion(59.98, 85.02, -60.02, -154.98)
     p.setDataDimension(3000, 3000)

@@ -13,6 +13,8 @@ from plot import plotter
 from headerFileReader import extractConvertTable
 from split import splitter
 
+from colorscale import Grayscale as COLORSCALE_IR
+from colorscale import VIS as COLORSCALE_VIS
 
 try:
     tar = tarfile.open(sys.argv[1], 'r:bz2')
@@ -58,7 +60,7 @@ for each in geossFile:
     DK = each.name[7]
     TIME = each.name[12:24]
 
-    if 'IR1' != CHANNEL and 'IR3' != CHANNEL:
+    if 'IR1' != CHANNEL and 'IR3' != CHANNEL and 'VIS' != CHANNEL:
         continue
 
     fileType = 'png'
@@ -89,14 +91,14 @@ for each in geossFile:
     p = plotter()
 
     if 'VIS' == CHANNEL:
-        p.setScaleParameters(False, '%')
+        p.setColorScale(COLORSCALE_VIS)
         p.setConvertTable(convertTable)
         p.setSourceRegion(59.995, 85.005, -60.005, -154.995)
         p.setDataDimension(12000, 12000)
         p.setDK(DK)
         p.setDataResolution(0.01, 0.01)
     else:
-        p.setScaleParameters(True, 'K')
+        p.setColorScale(COLORSCALE_IR)
         p.setConvertTable(convertTable)
         p.setSourceRegion(59.98, 85.02, -60.02, -154.98)
         p.setDataDimension(3000, 3000)
@@ -118,6 +120,9 @@ for each in geossFile:
 
     print "> Splitting image for map viewer..."
     try:
-        splitter(p, imgSavePath, img)
+        maxZoomLevel = 6
+        if 'VIS' == CHANNEL:
+            maxZoomLevel = 8
+        splitter(p, imgSavePath, img, maxZoom=maxZoomLevel)
     except Exception,e:
         print "!> Error: %s" % e

@@ -77,6 +77,7 @@ function mapView(divID){
         dataChannel = 0,
         dataDateList = [],
         dataDate = 0,
+        dataColorify = false,
         dataRegion = 0, // 0-full, 1-inc. North, 2-inc. South
         dataFileName = {};
 
@@ -167,6 +168,7 @@ function mapView(divID){
         'dragging',
         'graticules',
         'regionlines',
+        'colorify',
         'channel',
         'region',
         'datetime',
@@ -218,6 +220,9 @@ function mapView(divID){
                 text += '南半球';
             else
                 text += '全部';
+            value = null;
+        } else if('colorify' == name){
+            text += (value?'色彩强化':'黑白');
             value = null;
         } else
             text = value;
@@ -464,6 +469,12 @@ function mapView(divID){
         mapDraggingEnabled(!mapDraggingStatus);
     };
 
+    // enable or disable colorify
+    self.toggleColorify = function(){
+        dataColorify = !dataColorify;
+        showStatus('colorify', dataColorify);
+    };
+
 
     // show or hide menu for selecting layer
     var menuStatus = false;
@@ -489,13 +500,12 @@ function mapView(divID){
     showStatus('dragging').addClass('map-status-not-link');
     showStatus('graticules').click(self.toggleGraticules);
     showStatus('regionlines').click(self.toggleRegionLines);
+    showStatus('colorify').click(self.toggleColorify);
 
     
     /********************************************************************/
     /* Data Source assign and navigation */
 
-/*        dataDateList = [],
-        dataDate = 0;*/
     function updateCloudAtlas(){
         if(dataDate >= dataDateList.length) dataDate = 0;
         if(dataDate < 0) dataDate = dataDateList.length - 1;

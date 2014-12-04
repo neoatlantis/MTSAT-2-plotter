@@ -37,7 +37,6 @@ for(var t=0; t<=255; t++){
     };
     IRColorCache[t] = [round(r), round(g), round(b)];
 };
-console.log(IRColorCache)
 
 /****************************************************************************/
 

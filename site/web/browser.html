@@ -30,6 +30,10 @@
             margin: 0px;
         }
 
+        .hidden{
+            display: none;
+        }
+
         .button-date{
             background: #CCCCFF;
             border-color: #000000;
@@ -106,9 +110,18 @@
             padding: 3px;
             width: 20em;
         }
+
+        #start{
+            color: #FFFFFF;
+            padding: 1.0em;
+        }
     </style>
 </head>
 <body>
-    <div id="map"></div>
+    <div id="start">
+        如果您看到这条消息，说明浏览器没有启用JavaScript。
+        请启用，否则无法使用数据浏览器的任何功能。
+    </div>
+    <div id="map" class="hidden"></div>
 </body>
 </html>

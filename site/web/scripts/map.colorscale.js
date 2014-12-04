@@ -11,6 +11,9 @@ function round(color){
 };
 
 var r,g,b, i;
+
+
+
 var IRColorCache = {};
 for(var t=0; t<=255; t++){
     if(t > 240){
@@ -38,6 +41,8 @@ for(var t=0; t<=255; t++){
     IRColorCache[t] = [round(r), round(g), round(b)];
 };
 
+var IRWV
+
 /****************************************************************************/
 
 ret["IR-COLOR"] = function(data){
@@ -55,7 +60,7 @@ ret["IR-COLOR"] = function(data){
     };
 };
 
-ret['IR-VW'] = function(data){
+ret['IR-WV'] = function(data){
 };
 
 ret['GREY'] = function(data){

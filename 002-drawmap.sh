@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# make all dirs exist
-#mkdir -p ./sendcache
-
 # get date marker, e.g. 201411
 _DATEMONTH=`date -u +%Y%m`
 

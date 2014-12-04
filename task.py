@@ -23,22 +23,29 @@ try:
         if each.endswith('.tar.bz2'):
             mirrorList.append(each)
 
-    outputPathBase = os.path.join(currentPath, 'site', 'data')
-    logFilePath = os.path.join(outputPathBase, 'log.txt')
+    outputPath = os.path.join(currentPath, 'site', 'data')
 except:
     exit(1)
 
-for each in mirrorList:
-    outputPath = outputPathBase #os.path.join(outputPathBase, each[:-8])
-#    sendcacheFile = os.path.join(currentPath, 'sendcache', each[:-8] + '.7z')
+if not os.path.exists(outputPath):
+    os.makedirs(outputPath)
 
-    if not os.path.exists(outputPath):
-        os.makedirs(outputPath)
-    
+outpathDir = os.listdir(outputPath)
+
+for each in mirrorList:
+    done = False
+    for filename in outpathDir:
+        if filename.startswith(each[0:12]):
+            done = True
+            break
+    if done:
+        print "Skip dealing with [%s]." % each
+        continue
+
     mirrorPath = os.path.join(mirrorPathBase, each)
 
     print "Treating tarball [%s], saving to [%s]..." % (mirrorPath, outputPath)
-    subprocess.call(['python', 'reader.py', mirrorPath, outputPath, logFilePath])
+    subprocess.call(['python', 'reader.py', mirrorPath, outputPath])
 
     """
     print "Compressing result(s) for mailing..."

@@ -75,6 +75,7 @@ function mapView(divID){
         dataChannel = 0,
         dataDateList = [],
         dataDate = 0,
+        dataRegion = 0, // 0-full, 1-inc. North, 2-inc. South
         dataFileName = {};
 
     // create div for map region
@@ -165,6 +166,7 @@ function mapView(divID){
         'graticules',
         'regionlines',
         'channel',
+        'region',
         'datetime',
     ];
     function showStatus(name, value){
@@ -205,6 +207,15 @@ function mapView(divID){
             value = null;
         } else if('channel' == name){
             text += '通道 ' + dataChannelList[dataChannel];
+            value = null;
+        } else if('region' == name){
+            text += '范围 '
+            if(1 == dataRegion)
+                text += '北半球';
+            else if(2 == dataRegion)
+                text += '南半球';
+            else
+                text += '全部';
             value = null;
         } else
             text = value;
@@ -373,7 +384,7 @@ function mapView(divID){
         };
 
         if(undefined == cloudAtlasLayers[filename]){
-            var tileURL = "/{name}/{z}/{x}/{y}.{f}";
+            var tileURL = "/data/{name}/{z}/{x}/{y}.{f}";
             var canvasTiles = L.tileLayer.canvas({
                 maxZoom: mapZoomMax,
                 minZoom: mapZoomMin,
@@ -499,7 +510,6 @@ function mapView(divID){
         self.toggleMenu();
         e.stopPropagation();
     });
-    showStatus('datetime', '等待图像列表');
     showStatus('datetime-next').click(function(){
         dataDate += 1;
         updateCloudAtlas();
@@ -515,9 +525,18 @@ function mapView(divID){
         updateCloudAtlas();
     });
 
+    showStatus('region').click(function(){
+        dataRegion += 1;
+        if(dataRegion > 2) dataRegion = 0;
+        if(dataRegion < 0) dataRegion = 2;
+        showStatus('region', dataRegion);
+        menuListFilter();
+    });
+
     self.assignList = function(list){
         var menuDiv = $('#' + divID + '-menu').empty();
-        var dateStrList = [], exec, d12, channel, i, j;
+        var dateStrList = [], regionReg = {},
+            exec, d12, channel, scanN, scanS, i, j;
         for(i in list){
             exec = /([0-9]{12})/.exec(list[i]);
             if(!exec) continue;
@@ -530,14 +549,26 @@ function mapView(divID){
                 };
             };
             if(false === channel) continue;
+
+            scanN = true;
+            scanS = true;
+            if(list[i].indexOf('NORTH') >= 0)
+                scanS = false;
+            else if(list[i].indexOf('SOUTH') >= 0)
+                scanN = false;
+
             if(!dataFileName[d12]) dataFileName[d12] = {};
             dataFileName[d12][channel] = list[i];
+
+            if(!regionReg[d12]) regionReg[d12] = {north: scanN, south: scanS};
         };
 
         for(var i in dataFileName) dateStrList.push(i);
         dateStrList.sort();
 
+        var d12;
         for(var i=0; i<dateStrList.length; i++){
+            d12 = dateStrList[i];
             menuDiv.append($('<div>')
                 .append(
                     $('<input>', {
@@ -545,19 +576,39 @@ function mapView(divID){
                         'id': 'menu-' + dateStrList[i],
                         'value': dateStrList[i],
                     })
+                    .data('haveN', regionReg[d12].north)
+                    .data('haveS', regionReg[d12].south)
                 )
                 .append(
-                    $('<label>', {'for': 'menu-' + dateStrList[i]})
-                        .text(date12ToStr(dateStrList[i]))
+                    $('<label>', {'for': 'menu-' + d12})
+                        .text(date12ToStr(d12))
                 )
                 .addClass('map-menu-item')
             );
         };
+        menuListFilter();
+    };
+
+    function menuListFilter(){
+        var menuDiv = $('#' + divID + '-menu');
+
+        var wantN = (0 == dataRegion || 1 == dataRegion),
+            wantS = (0 == dataRegion || 2 == dataRegion);
+
+        menuDiv.find('input').each(function(){
+            var disable = (
+                (wantN && !$(this).data('haveN')) ||
+                (wantS && !$(this).data('haveS'))
+            );
+            $(this).attr('disabled', disable);
+        });
+        menuListChanged();
     };
 
     function menuListChanged(){
         var newList = [];
         $('#' + divID + '-menu input:checked').each(function(){
+            if($(this).attr('disabled')) return;
             newList.push($(this).val());
         });
         newList.sort();

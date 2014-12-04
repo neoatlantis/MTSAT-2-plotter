@@ -28,7 +28,7 @@ For more details on the data source, read
 `ftp://mtsat-1r.cr.chiba-u.ac.jp/readme.txt`. This is a detailed explanation of
 data structure, the meaning, etc.
 
-The plotter adds vectorized lines using data from [Nature Earth
+The plotter adds vectorized lines using data from [Natural Earth
 Data](http://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-coastline/).
 
 ------
@@ -52,6 +52,6 @@ Data](http://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-coastli
 要了解数据源的细节，请阅读`ftp://mtsat-1r.cr.chiba-u.ac.jp/readme.txt`。
 这里有对源数据的结构和含义的详解等。
 
-程序中绘制的矢量数据来自于[Nature Earth Data](http://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-coastline/).
+程序中绘制的矢量数据来自于[Natural Earth Data](http://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-coastline/).
 
 (For English version scroll to top)

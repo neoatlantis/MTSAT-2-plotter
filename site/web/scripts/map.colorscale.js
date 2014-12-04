@@ -49,29 +49,43 @@ var hsv, h, s, v;
 
 var IRColorCache = {};
 for(var t=0; t<=255; t++){
+    h = 0;
+    s = 100;
+    v = 100;
+
+    i = t / 2 - 90;
     if(t > 240){
         IRColorCache[t] = [0, 0, 0];
         continue;
     };
 
-    r = 0; g = 0; b = 0;
-    i = t / 2 - 90;
     if(i <= -80){
-        r = 255;
-        g = 127 + (i + 90) * 12.7;
-    } else if (i <= -70){
-        r = 127 + (i + 80) * 12.7;
-    } else if(i <= -50){
-        g = 155 + (i + 70) * 5;
-    } else if(i <= -30){
-        b = 255;
-        g = (i + 50) * 12.75;
-    } else if(i <= 30){
-        r = 255 - (i + 30) * 4.25;
-        g = r;
-        b = r;
+        h = 36 + 2.4 * (i + 90);
+        s = 85 + 1.5 * (i + 90);
+    } else if(i <= -70){
+        h = 30 - 3 * (i + 80);
+        s = 75 + 2.5 * (i + 80);
+        v = 60 + 4 * (i + 80);
+    } else if(i < -50){
+        h = 120 - 1.5 * (i + 70);
+        s = 100;
+        v = 60 + 2 * (i + 70);
+    } else if(i < -30){
+        h = 240 - 2.5 * (i + 50);
+        s = 100;
+        v = 70 + 1.5 * (i + 50);
+    } else if(i < 30){
+        h = 0;
+        s = 0;
+        v = 100 - 100 * (i + 30) / 60;
     };
-    IRColorCache[t] = [round(r), round(g), round(b)];
+
+    h /= 360;
+    s /= 100;
+    v /= 100;
+
+    rgb = hsvToRgb(h, s, v);
+    IRColorCache[t] = [round(rgb[0]), round(rgb[1]), round(rgb[2])];
 };
 
 var IRWVCache = {};

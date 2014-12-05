@@ -70,7 +70,7 @@ function date12ToStr(d12){
 
 /****************************************************************************/
 
-function mapView(divID, downloaders){
+function mapView(divID){
     var self = this;
 
     var dataChannelList = ['IR1', 'IR3'],
@@ -391,6 +391,7 @@ function mapView(divID, downloaders){
         };
 
         if(undefined == cloudAtlasLayers[filename]){
+            var tileURL = "/data/{name}/{z}/{x}/{y}.{f}";
             var canvasTiles = L.tileLayer.canvas({
                 maxZoom: mapZoomMax,
                 minZoom: mapZoomMin,
@@ -400,9 +401,20 @@ function mapView(divID, downloaders){
                 var countMax = 1 << zoom;
                 var ctx = canvas.getContext('2d');
                 // draw something on the tile canvas
-                
-                function callback(img){
+
+                var img = new Image();
+                var imgFormat = ((zoom <= 5)?'jpg':'png');
+                var url = tileURL
+                    .replace('{name}', filename)
+                    .replace('{z}', String(zoom))
+                    .replace('{x}', String(tilePoint.x % countMax))
+                    .replace('{y}', String(tilePoint.y % countMax))
+                    .replace('{f}', imgFormat)
+                ;
+                img.src = url; 
+                img.onload = function(){
                     var colorscaleName;
+
                     ctx.drawImage(img, 0, 0, 256, 256);
                     if(!dataColorify)
                         colorscaleName = 'GREY';
@@ -412,20 +424,11 @@ function mapView(divID, downloaders){
                         else
                             colorscaleName = 'IR-COLOR';
                     };
+
                     var imgdata = ctx.getImageData(0, 0, 256, 256);
                     colorscale[colorscaleName](imgdata.data);
                     ctx.putImageData(imgdata, 0, 0);
                 };
-
-                var imgFormat = ((zoom <= 5)?'jpg':'png');
-                downloaders.tile(
-                    filename,
-                    zoom, 
-                    tilePoint.x % countMax,
-                    tilePoint.y % countMax,
-                    imgFormat,
-                    callback
-                );
             };
             cloudAtlasLayers[filename] = canvasTiles;
         } else {
@@ -678,3 +681,4 @@ function mapView(divID, downloaders){
 //////////////////////////////////////////////////////////////////////////////
 return mapView;
 });
+

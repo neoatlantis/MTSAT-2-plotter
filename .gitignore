@@ -1,4 +1,5 @@
 testdata
+*.bak
 *.sw?
 *.pyc
 *.png

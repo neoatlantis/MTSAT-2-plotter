@@ -424,7 +424,7 @@ function mapView(divID){
                     ctx.drawImage(img, 0, 0, 256, 256);
 
                     if('VIS' == chn)
-                        colorscaleName = 'ORIG';
+                        colorscaleName = 'VIS';
                     else
                         if(!dataColorify)
                             colorscaleName = 'GREY';

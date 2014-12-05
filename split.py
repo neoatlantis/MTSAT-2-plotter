@@ -9,7 +9,7 @@ from PIL import Image
 from plotconfig import splitXInc, splitYInc
 
 
-def splitter(p, fn, img=None, maxZoom=7):
+def splitter(p, fn, img=None, maxZoom=6, onlyJPG=False):
     try:
         fileFullName = os.path.realpath(fn)
     except:
@@ -58,7 +58,7 @@ def splitter(p, fn, img=None, maxZoom=7):
                     continue
 
                 imgFormat = '.png'
-                if zoomLevel <= maxZoom - 1:
+                if onlyJPG == True or zoomLevel <= maxZoom - 1:
                     crop = crop.convert("RGB")
                     imgFormat = '.jpg'
 

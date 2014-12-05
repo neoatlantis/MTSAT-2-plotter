@@ -171,6 +171,7 @@ ret['GREY'] = function(data){
 };
 
 
+ret['ORIG'] = function(){ };
 
 return ret;
 

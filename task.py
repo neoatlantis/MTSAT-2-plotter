@@ -35,7 +35,7 @@ outpathDir = os.listdir(outputPath)
 for each in mirrorList:
     done = False
     for filename in outpathDir:
-        if filename.startswith(each[0:12]):
+        if filename.lower().startswith(each[0:15].lower()):
             done = True
             break
     if done:

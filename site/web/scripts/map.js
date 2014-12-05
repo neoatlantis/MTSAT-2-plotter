@@ -73,7 +73,7 @@ function date12ToStr(d12){
 function mapView(divID){
     var self = this;
 
-    var dataChannelList = ['IR1', 'IR3'],
+    var dataChannelList = ['IR1', 'IR3', 'VIS'],
         dataChannel = 0,
         dataDateList = [],
         dataDate = 0,
@@ -222,8 +222,13 @@ function mapView(divID){
                 text += '全部';
             value = null;
         } else if('colorify' == name){
-            text += (value?'色彩强化':'黑白');
-            value = null;
+            if(null === value){
+                text += '黑白';
+                value = false;
+            } else {
+                text += (value?'色彩强化':'黑白');
+                value = true;
+            };
         } else
             text = value;
 
@@ -402,8 +407,9 @@ function mapView(divID){
                 var ctx = canvas.getContext('2d');
                 // draw something on the tile canvas
 
+                var chn = dataChannelList[dataChannel];
                 var img = new Image();
-                var imgFormat = ((zoom <= 5)?'jpg':'png');
+                var imgFormat = ((zoom <= 5 || 'VIS' == chn)?'jpg':'png');
                 var url = tileURL
                     .replace('{name}', filename)
                     .replace('{z}', String(zoom))
@@ -416,14 +422,17 @@ function mapView(divID){
                     var colorscaleName;
 
                     ctx.drawImage(img, 0, 0, 256, 256);
-                    if(!dataColorify)
-                        colorscaleName = 'GREY';
-                    else {
-                        if('IR3' == dataChannelList[dataChannel])
-                            colorscaleName = 'IR-WV';
-                        else
-                            colorscaleName = 'IR-COLOR';
-                    };
+
+                    if('VIS' == chn)
+                        colorscaleName = 'ORIG';
+                    else
+                        if(!dataColorify)
+                            colorscaleName = 'GREY';
+                        else 
+                            if('IR3' == chn)
+                                colorscaleName = 'IR-WV';
+                            else
+                                colorscaleName = 'IR-COLOR';
 
                     var imgdata = ctx.getImageData(0, 0, 256, 256);
                     colorscale[colorscaleName](imgdata.data);
@@ -482,6 +491,7 @@ function mapView(divID){
 
     // enable or disable colorify
     self.toggleColorify = function(){
+        if('VIS' == dataChannelList[dataChannel]) return;
         dataColorify = !dataColorify;
         showStatus('colorify', dataColorify);
         clearCloudAtlasCache();
@@ -555,6 +565,10 @@ function mapView(divID){
     showStatus('channel').click(function(){
         dataChannel = (dataChannel + 1) % dataChannelList.length;
         showStatus('channel', dataChannel);
+        if('VIS' == dataChannelList[dataChannel])
+            showStatus('colorify', null);
+        else
+            showStatus('colorify', dataColorify);
         updateCloudAtlas();
     });
 

@@ -5,11 +5,6 @@ _DATEMONTH=`date -u +%Y%m`
 
 echo "Sync MTSAT-2 IR data for month $_DATEMONTH ..."
 
-# delete mirror and result files that are too old
-echo "Removing files that are old..."
-find ./site/mirror -type f  -mtime +1 -exec rm -rf {} \;
-find ./site/data -type f -mtime +4 -exec rm -rf {} \;
-
 # create mirror/<date> and result/<date> for storing data
 mkdir -p site/mirror/$_DATEMONTH site/data
 

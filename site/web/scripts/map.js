@@ -77,9 +77,23 @@ function mapView(divID){
         dataChannel = 0,
         dataDateList = [],
         dataDate = 0,
-        dataColorify = false,
         dataRegion = 0, // 0-full, 1-inc. North, 2-inc. South
         dataFileName = {};
+
+    var dataColorify = {
+        'IR1': {
+            methods: ['GREY', 'IR-COLOR', 'IR-DEVORAK-GREY'],
+            pointer: 0,
+        },
+        'IR3': {
+            methods: ['GREY', 'IR-WV'],
+            pointer: 0,
+        },
+        'VIS': {
+            methods: ['GREY'],
+            pointer: 0,
+        },
+    };
 
     // create div for map region
     $('#' + divID)
@@ -222,7 +236,12 @@ function mapView(divID){
                 text += '全部';
             value = null;
         } else if('colorify' == name){
-            text += (value?'色彩强化':'黑白');
+            var channelName = dataChannelList[dataChannel];
+            text += colorscale[
+                dataColorify[channelName].methods[
+                    dataColorify[channelName].pointer
+                ]
+            ].name;
             value = null;
         } else
             text = value;
@@ -399,6 +418,7 @@ function mapView(divID){
             });
             canvasTiles.drawTile = function(canvas, tilePoint, zoom){
                 var countMax = 1 << zoom;
+                var channelName = dataChannelList[dataChannel];
                 var ctx = canvas.getContext('2d');
                 // draw something on the tile canvas
 
@@ -413,20 +433,14 @@ function mapView(divID){
                 ;
                 img.src = url; 
                 img.onload = function(){
-                    var colorscaleName;
+                    var colorscaleName = dataColorify[channelName].methods[
+                        dataColorify[channelName].pointer
+                    ];
 
                     ctx.drawImage(img, 0, 0, 256, 256);
-                    if(!dataColorify)
-                        colorscaleName = 'GREY';
-                    else {
-                        if('IR3' == dataChannelList[dataChannel])
-                            colorscaleName = 'IR-WV';
-                        else
-                            colorscaleName = 'IR-COLOR';
-                    };
 
                     var imgdata = ctx.getImageData(0, 0, 256, 256);
-                    colorscale[colorscaleName](imgdata.data);
+                    colorscale[colorscaleName].func(imgdata.data);
                     ctx.putImageData(imgdata, 0, 0);
                 };
             };
@@ -482,8 +496,13 @@ function mapView(divID){
 
     // enable or disable colorify
     self.toggleColorify = function(){
-        dataColorify = !dataColorify;
-        showStatus('colorify', dataColorify);
+        var channelName = dataChannelList[dataChannel];
+        var pointer = dataColorify[channelName].pointer;
+        var methods = dataColorify[channelName].methods;
+        pointer++;
+        if(pointer > methods.length - 1) pointer = 0;
+        dataColorify[channelName].pointer = pointer;
+        showStatus('colorify', 'useless-value-for-updating');
         clearCloudAtlasCache();
         updateCloudAtlas();
     };
@@ -555,6 +574,7 @@ function mapView(divID){
     showStatus('channel').click(function(){
         dataChannel = (dataChannel + 1) % dataChannelList.length;
         showStatus('channel', dataChannel);
+        showStatus('colorify', 'useless-value-for-updating');
         updateCloudAtlas();
     });
 

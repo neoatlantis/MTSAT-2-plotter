@@ -86,6 +86,44 @@ for(var t=0; t<=255; t++){
     IRColorCache[t] = [round(rgb[0]), round(rgb[1]), round(rgb[2])];
 };
 
+
+var IRDevorakGreyCache = {};
+for(var t=0; t<=255; t++){
+    // credit: http://blog.cyclonecenter.org/2012/09/30/cyclone-centers-satellite-color-scheme/
+    h = 0;
+    s = 0;
+    v = 100;
+
+    i = t / 2 - 90;
+
+    if(i <= -80)
+        v = 26;
+    else if(i <= -70)
+        v = 62;
+    else if(i <= -69)
+        v = 100;
+    else if(i <= -63)
+        v = 0;
+    else if(i <= -53)
+        v = 72;
+    else if(i <= -41)
+        v = 60;
+    else if(i <= -30)
+        v = 36;
+    else if(i <= 9)
+        v = 82 + (23 - 82) * (i + 30) / 39;
+    else if(i <= 27)
+        v = 100 + (0 - 100) * (i - 9) / (27 - 9);
+    else
+        v = 0;
+
+    v /= 100;
+
+    rgb = hsvToRgb(h, s, v);
+    IRDevorakGreyCache[t] = [round(rgb[0]), round(rgb[1]), round(rgb[2])];
+};
+
+
 var IRWVCache = {};
 for(var t=0; t<=255; t++){
     h = 0;
@@ -132,44 +170,70 @@ for(var t=0; t<=255; t++){
 
 /****************************************************************************/
 
-ret["IR-COLOR"] = function(data){
-    var r,g,b, got;
-    for(var i=0; i<data.length; i+=4){
-        r = data[i];
-        g = data[i+1];
-        b = data[i+2];
-        
-        got = IRColorCache[Math.round((r+g+b) / 3)];
-        
-        data[i] = got[0];
-        data[i+1] = got[1]; 
-        data[i+2] = got[2];
-    };
+ret["IR-COLOR"] = {
+    name: '色彩增强',
+    func: function(data){
+        var r,g,b, got;
+        for(var i=0; i<data.length; i+=4){
+            r = data[i];
+            g = data[i+1];
+            b = data[i+2];
+            
+            got = IRColorCache[Math.round((r+g+b) / 3)];
+            
+            data[i] = got[0];
+            data[i+1] = got[1]; 
+            data[i+2] = got[2];
+        };
+    },
 };
 
-ret['IR-WV'] = function(data){
-    var r,g,b, got;
-    for(var i=0; i<data.length; i+=4){
-        r = data[i];
-        g = data[i+1];
-        b = data[i+2];
-        
-        got = IRWVCache[Math.round((r+g+b) / 3)];
-        
-        data[i] = got[0];
-        data[i+1] = got[1]; 
-        data[i+2] = got[2];
-    };
+ret["IR-DEVORAK-GREY"] = {
+    name: '德沃夏克',
+    func: function(data){
+        var r,g,b, got;
+        for(var i=0; i<data.length; i+=4){
+            r = data[i];
+            g = data[i+1];
+            b = data[i+2];
+            
+            got = IRDevorakGreyCache[Math.round((r+g+b) / 3)];
+            
+            data[i] = got[0];
+            data[i+1] = got[1]; 
+            data[i+2] = got[2];
+        };
+    },
 };
 
-ret['GREY'] = function(data){
-    for(var i=0; i<data.length; i+=4){
-        data[i] = 255 - data[i];
-        data[i+1] = 255 - data[i+1]; 
-        data[i+2] = 255 - data[i+2];
-    };
+ret['IR-WV'] = {
+    name: '色彩增强',
+    func: function(data){
+        var r,g,b, got;
+        for(var i=0; i<data.length; i+=4){
+            r = data[i];
+            g = data[i+1];
+            b = data[i+2];
+            
+            got = IRWVCache[Math.round((r+g+b) / 3)];
+            
+            data[i] = got[0];
+            data[i+1] = got[1]; 
+            data[i+2] = got[2];
+        };
+    },
 };
 
+ret['GREY'] = {
+    name: '黑白',
+    func: function(data){
+        for(var i=0; i<data.length; i+=4){
+            data[i] = 255 - data[i];
+            data[i+1] = 255 - data[i+1]; 
+            data[i+2] = 255 - data[i+2];
+        };
+    },
+};
 
 
 return ret;

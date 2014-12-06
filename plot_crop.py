@@ -142,7 +142,7 @@ class plotter:
         print "C converter called."
         return os.path.isfile(self.imageFilename)
 
-    def cropAndResize(self, img, cropRegion):
+    def cropAndResize(self, cropRegion, outputFilename):
         cropN, cropW, cropS, cropE = cropRegion
         drawW, drawH = self.dataDimension
         outW, outH = 256, 256
@@ -174,6 +174,9 @@ class plotter:
         if pointT < 0:
             pasteY = -pointT
             pointT = 0
+
+        cropImageFilename = self.getCacheFilename()
+
 
         cropImage = img.crop((pointL, pointT, pointR, pointB))
         newImage.paste(cropImage, (pasteX, pasteY))

@@ -98,7 +98,7 @@ for(var t=0; t<=255; t++){
 
     if(i <= -80)
         v = 26;
-    else if(i <= -70)
+    else if(i <= -75)
         v = 62;
     else if(i <= -69)
         v = 100;

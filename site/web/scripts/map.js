@@ -118,8 +118,9 @@ function mapView(divID){
 
     // define map attribution
     var mapAttribution = 
-        '<a href="http://www.cr.chiba-u.jp/english/">CEReS</a>, Chiba University | ' +
-        '<a href="http://www.naturalearthdata.com/">Natural Earth</a>'
+        '<a href="http://www.cr.chiba-u.jp/english/" target="_blank">CEReS</a>, Chiba University | ' +
+        '<a href="http://www.naturalearthdata.com/" target="_blank">Natural Earth</a> || ' +
+        '<a href="http://neoatlantis.org/mtsat-2.html" target="_blank">使用条款和说明</a>'
     ;
 
     // initialize the map instance

@@ -118,7 +118,6 @@ function mapView(divID){
 
     // define map attribution
     var mapAttribution = 
-        '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> | ' +
         '<a href="http://www.cr.chiba-u.jp/english/">CEReS</a>, Chiba University | ' +
         '<a href="http://www.naturalearthdata.com/">Natural Earth</a>'
     ;

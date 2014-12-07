@@ -96,23 +96,23 @@ for(var t=0; t<=255; t++){
 
     i = t / 2 - 90;
 
-    if(i <= -80)
+    if(i < -80)
         v = 26;
-    else if(i <= -75)
+    else if(i < -75)
         v = 62;
     else if(i <= -69)
         v = 100;
-    else if(i <= -63)
+    else if(i < -63)
         v = 0;
     else if(i <= -53)
         v = 72;
-    else if(i <= -41)
+    else if(i < -41)
         v = 60;
-    else if(i <= -30)
+    else if(i < -30)
         v = 36;
-    else if(i <= 9)
+    else if(i < 9)
         v = 82 + (23 - 82) * (i + 30) / 39;
-    else if(i <= 27)
+    else if(i < 27)
         v = 100 + (0 - 100) * (i - 9) / (27 - 9);
     else
         v = 0;

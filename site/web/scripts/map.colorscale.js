@@ -87,7 +87,7 @@ for(var t=0; t<=255; t++){
 };
 
 
-var IRDevorakGreyCache = {};
+var IRBDCache = {};
 for(var t=0; t<=255; t++){
     // credit: http://blog.cyclonecenter.org/2012/09/30/cyclone-centers-satellite-color-scheme/
     h = 0;
@@ -120,7 +120,7 @@ for(var t=0; t<=255; t++){
     v /= 100;
 
     rgb = hsvToRgb(h, s, v);
-    IRDevorakGreyCache[t] = [round(rgb[0]), round(rgb[1]), round(rgb[2])];
+    IRBDCache[t] = [round(rgb[0]), round(rgb[1]), round(rgb[2])];
 };
 
 
@@ -188,8 +188,8 @@ ret["IR-COLOR"] = {
     },
 };
 
-ret["IR-DEVORAK-GREY"] = {
-    name: '德沃夏克',
+ret["IR-BD"] = {
+    name: 'BD曲线',
     func: function(data){
         var r,g,b, got;
         for(var i=0; i<data.length; i+=4){
@@ -197,7 +197,7 @@ ret["IR-DEVORAK-GREY"] = {
             g = data[i+1];
             b = data[i+2];
             
-            got = IRDevorakGreyCache[Math.round((r+g+b) / 3)];
+            got = IRBDCache[Math.round((r+g+b) / 3)];
             
             data[i] = got[0];
             data[i+1] = got[1]; 

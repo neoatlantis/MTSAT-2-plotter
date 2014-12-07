@@ -82,7 +82,7 @@ function mapView(divID){
 
     var dataColorify = {
         'IR1': {
-            methods: ['GREY', 'IR-COLOR', 'IR-DEVORAK-GREY'],
+            methods: ['GREY', 'IR-COLOR', 'IR-BD'],
             pointer: 0,
         },
         'IR3': {

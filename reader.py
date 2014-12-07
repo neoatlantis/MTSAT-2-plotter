@@ -60,7 +60,7 @@ for each in geossFile:
     DK = each.name[7]
     TIME = each.name[12:24]
 
-    if 'IR1' != CHANNEL and 'IR3' != CHANNEL and 'VIS' != CHANNEL:
+    if not CHANNEL in ['IR1', 'IR2', 'IR3', 'VIS']:
         continue
 
     fileType = 'png'

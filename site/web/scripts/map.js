@@ -73,7 +73,7 @@ function date12ToStr(d12){
 function mapView(divID){
     var self = this;
 
-    var dataChannelList = ['IR1', 'IR3'],
+    var dataChannelList = ['IR1', 'IR2', 'IR3'],
         dataChannel = 0,
         dataDateList = [],
         dataDate = 0,
@@ -82,6 +82,10 @@ function mapView(divID){
 
     var dataColorify = {
         'IR1': {
+            methods: ['GREY', 'IR-COLOR', 'IR-BD'],
+            pointer: 0,
+        },
+        'IR2': {
             methods: ['GREY', 'IR-COLOR', 'IR-BD'],
             pointer: 0,
         },

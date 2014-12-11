@@ -7,6 +7,7 @@ define([
 
     'leaflet.mouseposition',
     'leaflet.draw',
+    'tooltip',
 ], function(
     $,
     L,
@@ -112,7 +113,9 @@ function mapView(divID){
             $('<div>', {id: divID + '-menu'}).addClass('map-menu').hide()
         )
         .append(
-            $('<div>', {id: divID + '-colorscale'}).addClass('map-colorscale')
+            $('<div>', {id: divID + '-colorscale'})
+                .addClass('map-colorscale')
+                .hide()
         )
     ;
 
@@ -408,23 +411,42 @@ function mapView(divID){
             colorscaleFunc = colorscale[colorscaleName].func,
             labelFunc = colorscale[colorscaleName].convertGrayscale
         ;
-        var container = $('.map-colorscale').empty(),
-            color = null;
-        if(!newCloudAtlasDrawn) return;
+        var container = $('.map-colorscale');
+        if(!newCloudAtlasDrawn) return container.hide();
+        container.show();
 
-        for(var i=0; i<=240; i+=2){
-            color = [i,i,i,0];
-            colorscaleFunc(color);
-            container.append(
-                $('<div>')
+        if(!container.data('initialized')){
+            container.empty();
+            for(var i=0; i<=240; i+=2){
+                var elementID = 'map-colorscale-line-' + i;
+                var element = $('<div>', {id: elementID})
+                    .appendTo(container)
                     .addClass('map-colorscale-line')
-                    .css(
-                        'background-color', 
-                        'rgb(' + color.slice(0,3).join(',') + ')'
-                    )
-                    .attr('title', labelFunc(i))
-            );
+                    .data('grayscale', i)
+                    .data('opentip', new Opentip('#' + elementID, {
+                        target: '#' + elementID,
+                        tipJoint: 'right',
+                        group: 'colorscale',
+                        delay: 0,
+                        hideDelay: 0,
+                    }))
+                ;
+            };
+            container.data('initialized', true);
         };
+
+        container.find('.map-colorscale-line').each(function(){
+            var i = $(this).data('grayscale');
+            var color = [i,i,i,0];
+            colorscaleFunc(color);
+            $(this)
+                .css(
+                    'background-color', 
+                    'rgb(' + color.slice(0,3).join(',') + ')'
+                )
+            ;
+            $(this).data('opentip').setContent(labelFunc(i));
+        });
     };
     this.toggleCloudAtlas = function(d12){
         var filename = dataFileName[d12], 

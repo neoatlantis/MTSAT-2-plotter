@@ -42,6 +42,10 @@ function hsvToRgb(h, s, v){
     return [r * 255, g * 255, b * 255];
 };
 
+function rawGrayscaleToTemperature(t){
+    return (t / 2 - 90);
+};
+
 /****************************************************************************/
 var rgb, r, g, b, i;
 var hsv, h, s, v;
@@ -53,7 +57,7 @@ for(var t=0; t<=255; t++){
     s = 100;
     v = 100;
 
-    i = t / 2 - 90;
+    i = rawGrayscaleToTemperature(t);
 
     if(i < -80){
         h = 36 + 2.4 * (i + 90);
@@ -94,7 +98,7 @@ for(var t=0; t<=255; t++){
     s = 0;
     v = 100;
 
-    i = t / 2 - 90;
+    i = rawGrayscaleToTemperature(t);
 
     if(i < -80)
         v = 26;
@@ -130,7 +134,7 @@ for(var t=0; t<=255; t++){
     s = 0;
     v = 100;
 
-    i = t / 2 - 90;
+    i = rawGrayscaleToTemperature(t);
     if(i < -70) i = -70;
     if(i > 0) i = 0;
 
@@ -170,6 +174,15 @@ for(var t=0; t<=255; t++){
 
 /****************************************************************************/
 
+function grayscaleToTbb(g){
+    var Tbb = rawGrayscaleToTemperature(g);
+    return Tbb + '℃ / ' + (Tbb + 273.15) + 'K';
+};
+
+function grayscaleToProcent(g){
+    return String(g / 255.0 * 100.0) + '%';
+};
+
 ret["IR-COLOR"] = {
     name: '色彩增强',
     func: function(data){
@@ -186,6 +199,7 @@ ret["IR-COLOR"] = {
             data[i+2] = got[2];
         };
     },
+    convertGrayscale: grayscaleToTbb,
 };
 
 ret["IR-BD"] = {
@@ -204,6 +218,7 @@ ret["IR-BD"] = {
             data[i+2] = got[2];
         };
     },
+    convertGrayscale: grayscaleToTbb,
 };
 
 ret['IR-WV'] = {
@@ -222,9 +237,10 @@ ret['IR-WV'] = {
             data[i+2] = got[2];
         };
     },
+    convertGrayscale: grayscaleToTbb,
 };
 
-ret['GREY'] = {
+ret['IR-GREY'] = {
     name: '黑白',
     func: function(data){
         for(var i=0; i<data.length; i+=4){
@@ -233,8 +249,20 @@ ret['GREY'] = {
             data[i+2] = 255 - data[i+2];
         };
     },
+    convertGrayscale: grayscaleToTbb,
 };
 
+ret['VIS-GREY'] = {
+    name: '黑白',
+    func: function(data){
+        for(var i=0; i<data.length; i+=4){
+            data[i] = 255 - data[i];
+            data[i+1] = 255 - data[i+1]; 
+            data[i+2] = 255 - data[i+2];
+        };
+    },
+    convertGrayscale: grayscaleToTbb,
+};
 
 return ret;
 

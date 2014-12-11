@@ -82,19 +82,19 @@ function mapView(divID){
 
     var dataColorify = {
         'IR1': {
-            methods: ['GREY', 'IR-COLOR', 'IR-BD'],
+            methods: ['IR-GREY', 'IR-COLOR', 'IR-BD'],
             pointer: 0,
         },
         'IR2': {
-            methods: ['GREY', 'IR-COLOR', 'IR-BD'],
+            methods: ['IR-GREY', 'IR-COLOR', 'IR-BD'],
             pointer: 0,
         },
         'IR3': {
-            methods: ['GREY', 'IR-WV'],
+            methods: ['IR-GREY', 'IR-WV'],
             pointer: 0,
         },
         'VIS': {
-            methods: ['GREY'],
+            methods: ['VIS-GREY'],
             pointer: 0,
         },
     };
@@ -110,6 +110,9 @@ function mapView(divID){
         )
         .append(
             $('<div>', {id: divID + '-menu'}).addClass('map-menu').hide()
+        )
+        .append(
+            $('<div>', {id: divID + '-colorscale'}).addClass('map-colorscale')
         )
     ;
 
@@ -397,6 +400,32 @@ function mapView(divID){
     //   being hide.
 
     var cloudAtlasLayers = {};
+    function updateColorScale(newCloudAtlasDrawn){
+        var channelName = dataChannelList[dataChannel];
+        var colorscaleName = dataColorify[channelName].methods[
+                dataColorify[channelName].pointer
+            ],
+            colorscaleFunc = colorscale[colorscaleName].func,
+            labelFunc = colorscale[colorscaleName].convertGrayscale
+        ;
+        var container = $('.map-colorscale').empty(),
+            color = null;
+        if(!newCloudAtlasDrawn) return;
+
+        for(var i=0; i<=240; i+=2){
+            color = [i,i,i,0];
+            colorscaleFunc(color);
+            container.append(
+                $('<div>')
+                    .addClass('map-colorscale-line')
+                    .css(
+                        'background-color', 
+                        'rgb(' + color.slice(0,3).join(',') + ')'
+                    )
+                    .attr('title', labelFunc(i))
+            );
+        };
+    };
     this.toggleCloudAtlas = function(d12){
         var filename = dataFileName[d12], 
             channel = dataChannelList[dataChannel];
@@ -410,6 +439,7 @@ function mapView(divID){
         if(!d12 || !filename){
             for(var i in cloudAtlasLayers)
                 map.removeLayer(cloudAtlasLayers[i]);
+            updateColorScale(false);
             return;
         };
 
@@ -435,16 +465,17 @@ function mapView(divID){
                     .replace('{y}', String(tilePoint.y % countMax))
                     .replace('{f}', imgFormat)
                 ;
+                var colorscaleName = dataColorify[channelName].methods[
+                        dataColorify[channelName].pointer
+                    ],
+                    colorscaleFunc = colorscale[colorscaleName].func
+                ;
+                    
                 img.src = url; 
                 img.onload = function(){
-                    var colorscaleName = dataColorify[channelName].methods[
-                        dataColorify[channelName].pointer
-                    ];
-
                     ctx.drawImage(img, 0, 0, 256, 256);
-
                     var imgdata = ctx.getImageData(0, 0, 256, 256);
-                    colorscale[colorscaleName].func(imgdata.data);
+                    colorscaleFunc(imgdata.data);
                     ctx.putImageData(imgdata, 0, 0);
                 };
             };
@@ -453,12 +484,15 @@ function mapView(divID){
             var canvasTiles = cloudAtlasLayers[filename];
         };
 
+        var newCloudAtlasDrawn = false;
         for(var i in cloudAtlasLayers){
-            if(i == filename)
+            if(i == filename){
                 cloudAtlasLayers[i].addTo(map);
-            else
+                newCloudAtlasDrawn = true;
+            } else
                 map.removeLayer(cloudAtlasLayers[i]);
         };
+        updateColorScale(newCloudAtlasDrawn);
         return self;
     };
 

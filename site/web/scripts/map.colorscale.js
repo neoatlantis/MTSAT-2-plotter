@@ -176,7 +176,7 @@ for(var t=0; t<=255; t++){
 
 function grayscaleToTbb(g){
     var Tbb = rawGrayscaleToTemperature(g);
-    return Tbb + '℃ / ' + (Tbb + 273.15) + 'K';
+    return Tbb + '℃ / ' + (Tbb + 273.15).toFixed(2) + 'K';
 };
 
 function grayscaleToProcent(g){

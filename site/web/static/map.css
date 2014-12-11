@@ -59,8 +59,11 @@
     width: 30px;
     height: 480px;
     background-color: #999999;
+    border: #FFFFFF 2px solid;
+    overflow: hidden;
 }
 .map-colorscale-line{
+    position: relative;
     margin: 0px;
     padding: 0px;
     height: 4px;

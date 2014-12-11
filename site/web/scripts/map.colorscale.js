@@ -42,14 +42,12 @@ function hsvToRgb(h, s, v){
     return [r * 255, g * 255, b * 255];
 };
 
-function rawGrayscaleToTemperature(t){
+function grayscaleToTbb(t){
     return (t / 2 - 90);
 };
 
 /****************************************************************************/
-var rgb, r, g, b, i;
-var hsv, h, s, v;
-
+var rgb, hsv, h, s, v;
 
 var IRColorCache = {};
 for(var t=0; t<=255; t++){
@@ -57,7 +55,7 @@ for(var t=0; t<=255; t++){
     s = 100;
     v = 100;
 
-    i = rawGrayscaleToTemperature(t);
+    i = grayscaleToTbb(t);
 
     if(i < -80){
         h = 36 + 2.4 * (i + 90);
@@ -98,7 +96,7 @@ for(var t=0; t<=255; t++){
     s = 0;
     v = 100;
 
-    i = rawGrayscaleToTemperature(t);
+    i = grayscaleToTbb(t);
 
     if(i < -80)
         v = 26;
@@ -134,7 +132,7 @@ for(var t=0; t<=255; t++){
     s = 0;
     v = 100;
 
-    i = rawGrayscaleToTemperature(t);
+    i = grayscaleToTbb(t);
     if(i < -70) i = -70;
     if(i > 0) i = 0;
 
@@ -174,12 +172,12 @@ for(var t=0; t<=255; t++){
 
 /****************************************************************************/
 
-function grayscaleToTbb(g){
-    var Tbb = rawGrayscaleToTemperature(g);
+function grayscaleToTbbLabel(g){
+    var Tbb = grayscaleToTbb(g);
     return Tbb + '℃ / ' + (Tbb + 273.15).toFixed(2) + 'K';
 };
 
-function grayscaleToProcent(g){
+function grayscaleToProcentLabel(g){
     return String(g / 255.0 * 100.0) + '%';
 };
 
@@ -199,7 +197,7 @@ ret["IR-COLOR"] = {
             data[i+2] = got[2];
         };
     },
-    convertGrayscale: grayscaleToTbb,
+    convertGrayscale: grayscaleToTbbLabel,
 };
 
 ret["IR-BD"] = {
@@ -218,7 +216,32 @@ ret["IR-BD"] = {
             data[i+2] = got[2];
         };
     },
-    convertGrayscale: grayscaleToTbb,
+    convertGrayscale: function(g){
+        var i = grayscaleToTbb(g);
+        var str1 = grayscaleToTbbLabel(g);
+        var str2;
+        if(i < -80)
+            str2 = 'CDG';
+        else if(i < -75)
+            str2 = 'CMG';
+        else if(i <= -69)
+            str2 = 'W';
+        else if(i < -63)
+            str2 = 'B';
+        else if(i <= -53)
+            str2 = 'LG';
+        else if(i < -41)
+            str2 = 'MG';
+        else if(i < -30)
+            str2 = 'DG';
+        else if(i < 9)
+            str2 = 'OW';
+        else if(i < 27)
+            str2 = 'WMG';
+        else
+            str2 = '';
+        return str1 + ' ' + str2;
+    },
 };
 
 ret['IR-WV'] = {
@@ -237,7 +260,7 @@ ret['IR-WV'] = {
             data[i+2] = got[2];
         };
     },
-    convertGrayscale: grayscaleToTbb,
+    convertGrayscale: grayscaleToTbbLabel,
 };
 
 ret['IR-GREY'] = {
@@ -249,7 +272,7 @@ ret['IR-GREY'] = {
             data[i+2] = 255 - data[i+2];
         };
     },
-    convertGrayscale: grayscaleToTbb,
+    convertGrayscale: grayscaleToTbbLabel,
 };
 
 ret['VIS-GREY'] = {
@@ -261,7 +284,7 @@ ret['VIS-GREY'] = {
             data[i+2] = 255 - data[i+2];
         };
     },
-    convertGrayscale: grayscaleToTbb,
+    convertGrayscale: grayscaleToProcentLabel,
 };
 
 return ret;

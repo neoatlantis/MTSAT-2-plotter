@@ -102,11 +102,11 @@ for(var t=0; t<=255; t++){
         v = 26;
     else if(i < -75)
         v = 62;
-    else if(i <= -69)
+    else if(i < -69)
         v = 100;
     else if(i < -63)
         v = 0;
-    else if(i <= -53)
+    else if(i < -53)
         v = 72;
     else if(i < -41)
         v = 60;
@@ -124,6 +124,61 @@ for(var t=0; t<=255; t++){
     rgb = hsvToRgb(h, s, v);
     IRBDCache[t] = [round(rgb[0]), round(rgb[1]), round(rgb[2])];
 };
+
+
+
+var IRBDColorCache = {};
+for(var t=0; t<=255; t++){
+    // credit: http://blog.cyclonecenter.org/2012/09/30/cyclone-centers-satellite-color-scheme/
+    h = 0;
+    s = 0;
+    v = 100;
+
+    i = grayscaleToTbb(t);
+
+    if(i < -85)
+        v = 100;
+    else if(i < -80){
+        h = 240;
+        s = 100;
+        v = 60;
+    } else if(i < -75){
+        h = 225;
+        s = 71;
+        v = 88;
+    } else if(i < -69) {
+        h = 195;
+        s = 100;
+    } else if(i < -63){
+        h = 208;
+        s = 37;
+    } else if(i < -53){
+        h = 51;
+        s = 80;
+    } else if(i < -41){
+        h = 26;
+        s = 100;
+    } else if(i < -30){
+        h = 0;
+        s = 78;
+        v = 63;
+    } else if(i < 9){
+        h = 0;
+        s = 12 + (29 - 12) * (i + 30) / 39;
+        v = 100 + (40 - 100) * (i + 30) / 39;
+    } else if(i < 27)
+        v = 100 + (0 - 100) * (i - 9) / (27 - 9);
+    else
+        v = 0;
+
+    h /= 360;
+    s /= 100;
+    v /= 100;
+
+    rgb = hsvToRgb(h, s, v);
+    IRBDColorCache[t] = [round(rgb[0]), round(rgb[1]), round(rgb[2])];
+};
+
 
 
 var IRWVCache = {};
@@ -201,7 +256,7 @@ ret["IR-COLOR"] = {
 };
 
 ret["IR-BD"] = {
-    name: 'BD曲线',
+    name: 'BD灰度',
     func: function(data){
         var r,g,b, got;
         for(var i=0; i<data.length; i+=4){
@@ -242,6 +297,25 @@ ret["IR-BD"] = {
             str2 = '';
         return str1 + ' ' + str2;
     },
+};
+
+ret["IR-BD-COLOR"] = {
+    name: 'BD彩色',
+    func: function(data){
+        var r,g,b, got;
+        for(var i=0; i<data.length; i+=4){
+            r = data[i];
+            g = data[i+1];
+            b = data[i+2];
+            
+            got = IRBDColorCache[Math.round((r+g+b) / 3)];
+            
+            data[i] = got[0];
+            data[i+1] = got[1]; 
+            data[i+2] = got[2];
+        };
+    },
+    convertGrayscale: ret["IR-BD"].convertGrayscale,
 };
 
 ret['IR-WV'] = {

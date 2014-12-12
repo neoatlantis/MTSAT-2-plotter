@@ -13,4 +13,4 @@ mkdir -p site/mirror/$_DATEMONTH site/data
 #   --max-days 1    for limiting the old date
 #   -l 2            log level 2
 #   -x "*vis*"      excluding VISUAL data
-./ftpcopy --max-days 1 -l 2 -x "*vis*" ftp://mtsat-1r.cr.chiba-u.ac.jp/grid-MTSAT-2.0/MTSAT2/$_DATEMONTH/ site/mirror/$_DATEMONTH
+./ftpcopy --max-days 1 -l 2 ftp://mtsat-1r.cr.chiba-u.ac.jp/grid-MTSAT-2.0/MTSAT2/$_DATEMONTH/ site/mirror/$_DATEMONTH

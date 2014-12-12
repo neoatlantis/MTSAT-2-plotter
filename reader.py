@@ -121,15 +121,14 @@ for each in geossFile:
     print "> Splitting image for map viewer..."
     try:
         maxZoomLevel = 6
-        outputJPGOnly = False
-        if 'VIS' == CHANNEL:
-            outputJPGOnly = True
+#       outputJPGOnly = False
+#       if 'VIS' == CHANNEL:
+#           outputJPGOnly = True
         splitter(\
             p, 
             imgSavePath, 
             img,
-            maxZoom = maxZoomLevel,
-            onlyJPG = outputJPGOnly
+            maxZoom = maxZoomLevel
         )
     except Exception,e:
         print "!> Error: %s" % e

@@ -480,7 +480,8 @@ function mapView(divID){
 
                 var chn = dataChannelList[dataChannel];
                 var img = new Image();
-                var imgFormat = ((zoom <= 5 || 'VIS' == chn)?'jpg':'png');
+//                var imgFormat = ((zoom <= 5 || 'VIS' == chn)?'jpg':'png');
+                var imgFormat = ((zoom <= 5)?'jpg':'png');
                 var url = tileURL
                     .replace('{name}', filename)
                     .replace('{z}', String(zoom))

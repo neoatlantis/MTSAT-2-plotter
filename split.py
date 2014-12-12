@@ -10,6 +10,7 @@ from plotconfig import splitXInc, splitYInc
 
 
 def splitter(p, fn, img=None, maxZoom=6, onlyJPG=False):
+    onlyJPG = False
     try:
         fileFullName = os.path.realpath(fn)
     except:

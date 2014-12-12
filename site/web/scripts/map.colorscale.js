@@ -42,10 +42,12 @@ function hsvToRgb(h, s, v){
     return [r * 255, g * 255, b * 255];
 };
 
-/****************************************************************************/
-var rgb, r, g, b, i;
-var hsv, h, s, v;
+function grayscaleToTbb(t){
+    return (t / 2 - 90);
+};
 
+/****************************************************************************/
+var rgb, hsv, h, s, v;
 
 var IRColorCache = {};
 for(var t=0; t<=255; t++){
@@ -53,7 +55,7 @@ for(var t=0; t<=255; t++){
     s = 100;
     v = 100;
 
-    i = t / 2 - 90;
+    i = grayscaleToTbb(t);
 
     if(i < -80){
         h = 36 + 2.4 * (i + 90);
@@ -86,13 +88,51 @@ for(var t=0; t<=255; t++){
     IRColorCache[t] = [round(rgb[0]), round(rgb[1]), round(rgb[2])];
 };
 
+
+var IRBDCache = {};
+for(var t=0; t<=255; t++){
+    // credit: http://blog.cyclonecenter.org/2012/09/30/cyclone-centers-satellite-color-scheme/
+    h = 0;
+    s = 0;
+    v = 100;
+
+    i = grayscaleToTbb(t);
+
+    if(i < -80)
+        v = 26;
+    else if(i < -75)
+        v = 62;
+    else if(i <= -69)
+        v = 100;
+    else if(i < -63)
+        v = 0;
+    else if(i <= -53)
+        v = 72;
+    else if(i < -41)
+        v = 60;
+    else if(i < -30)
+        v = 36;
+    else if(i < 9)
+        v = 82 + (23 - 82) * (i + 30) / 39;
+    else if(i < 27)
+        v = 100 + (0 - 100) * (i - 9) / (27 - 9);
+    else
+        v = 0;
+
+    v /= 100;
+
+    rgb = hsvToRgb(h, s, v);
+    IRBDCache[t] = [round(rgb[0]), round(rgb[1]), round(rgb[2])];
+};
+
+
 var IRWVCache = {};
 for(var t=0; t<=255; t++){
     h = 0;
     s = 0;
     v = 100;
 
-    i = t / 2 - 90;
+    i = grayscaleToTbb(t);
     if(i < -70) i = -70;
     if(i > 0) i = 0;
 
@@ -132,47 +172,119 @@ for(var t=0; t<=255; t++){
 
 /****************************************************************************/
 
-ret["IR-COLOR"] = function(data){
-    var r,g,b, got;
-    for(var i=0; i<data.length; i+=4){
-        r = data[i];
-        g = data[i+1];
-        b = data[i+2];
-        
-        got = IRColorCache[Math.round((r+g+b) / 3)];
-        
-        data[i] = got[0];
-        data[i+1] = got[1]; 
-        data[i+2] = got[2];
-    };
+function grayscaleToTbbLabel(g){
+    var Tbb = grayscaleToTbb(g);
+    return Tbb + '℃ / ' + (Tbb + 273.15).toFixed(2) + 'K';
 };
 
-ret['IR-WV'] = function(data){
-    var r,g,b, got;
-    for(var i=0; i<data.length; i+=4){
-        r = data[i];
-        g = data[i+1];
-        b = data[i+2];
-        
-        got = IRWVCache[Math.round((r+g+b) / 3)];
-        
-        data[i] = got[0];
-        data[i+1] = got[1]; 
-        data[i+2] = got[2];
-    };
+function grayscaleToProcentLabel(g){
+    return String(g / 255.0 * 100.0) + '%';
 };
 
-ret['GREY'] = function(data){
-    for(var i=0; i<data.length; i+=4){
-        data[i] = 255 - data[i];
-        data[i+1] = 255 - data[i+1]; 
-        data[i+2] = 255 - data[i+2];
-    };
+ret["IR-COLOR"] = {
+    name: '色彩增强',
+    func: function(data){
+        var r,g,b, got;
+        for(var i=0; i<data.length; i+=4){
+            r = data[i];
+            g = data[i+1];
+            b = data[i+2];
+            
+            got = IRColorCache[Math.round((r+g+b) / 3)];
+            
+            data[i] = got[0];
+            data[i+1] = got[1]; 
+            data[i+2] = got[2];
+        };
+    },
+    convertGrayscale: grayscaleToTbbLabel,
 };
 
+ret["IR-BD"] = {
+    name: 'BD曲线',
+    func: function(data){
+        var r,g,b, got;
+        for(var i=0; i<data.length; i+=4){
+            r = data[i];
+            g = data[i+1];
+            b = data[i+2];
+            
+            got = IRBDCache[Math.round((r+g+b) / 3)];
+            
+            data[i] = got[0];
+            data[i+1] = got[1]; 
+            data[i+2] = got[2];
+        };
+    },
+    convertGrayscale: function(g){
+        var i = grayscaleToTbb(g);
+        var str1 = grayscaleToTbbLabel(g);
+        var str2;
+        if(i < -80)
+            str2 = 'CDG';
+        else if(i < -75)
+            str2 = 'CMG';
+        else if(i <= -69)
+            str2 = 'W';
+        else if(i < -63)
+            str2 = 'B';
+        else if(i <= -53)
+            str2 = 'LG';
+        else if(i < -41)
+            str2 = 'MG';
+        else if(i < -30)
+            str2 = 'DG';
+        else if(i < 9)
+            str2 = 'OW';
+        else if(i < 27)
+            str2 = 'WMG';
+        else
+            str2 = '';
+        return str1 + ' ' + str2;
+    },
+};
 
-ret['VIS'] = function(data){
+ret['IR-WV'] = {
+    name: '色彩增强',
+    func: function(data){
+        var r,g,b, got;
+        for(var i=0; i<data.length; i+=4){
+            r = data[i];
+            g = data[i+1];
+            b = data[i+2];
+            
+            got = IRWVCache[Math.round((r+g+b) / 3)];
+            
+            data[i] = got[0];
+            data[i+1] = got[1]; 
+            data[i+2] = got[2];
+        };
+    },
+    convertGrayscale: grayscaleToTbbLabel,
+};
 
+ret['IR-GREY'] = {
+    name: '黑白',
+    func: function(data){
+        for(var i=0; i<data.length; i+=4){
+            data[i] = 255 - data[i];
+            data[i+1] = 255 - data[i+1]; 
+            data[i+2] = 255 - data[i+2];
+        };
+    },
+    convertGrayscale: grayscaleToTbbLabel,
+};
+
+ret['VIS-GREY'] = {
+    name: '黑白',
+    func: function(data){
+        for(var i=0; i<data.length; i+=4){
+            data[i] = 255 - data[i];
+            data[i+1] = 255 - data[i+1]; 
+            data[i+2] = 255 - data[i+2];
+        };
+    },
+    convertGrayscale: grayscaleToProcentLabel,
 };
 
 return ret;

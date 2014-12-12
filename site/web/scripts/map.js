@@ -7,6 +7,7 @@ define([
 
     'leaflet.mouseposition',
     'leaflet.draw',
+    'tooltip',
 ], function(
     $,
     L,
@@ -73,13 +74,31 @@ function date12ToStr(d12){
 function mapView(divID){
     var self = this;
 
-    var dataChannelList = ['IR1', 'IR3', 'VIS'],
+    var dataChannelList = ['IR1', 'IR2', 'IR3', 'VIS'],
         dataChannel = 0,
         dataDateList = [],
         dataDate = 0,
-        dataColorify = false,
         dataRegion = 0, // 0-full, 1-inc. North, 2-inc. South
         dataFileName = {};
+
+    var dataColorify = {
+        'IR1': {
+            methods: ['IR-GREY', 'IR-COLOR', 'IR-BD'],
+            pointer: 0,
+        },
+        'IR2': {
+            methods: ['IR-GREY', 'IR-COLOR', 'IR-BD'],
+            pointer: 0,
+        },
+        'IR3': {
+            methods: ['IR-GREY', 'IR-WV'],
+            pointer: 0,
+        },
+        'VIS': {
+            methods: ['VIS-GREY'],
+            pointer: 0,
+        },
+    };
 
     // create div for map region
     $('#' + divID)
@@ -92,6 +111,11 @@ function mapView(divID){
         )
         .append(
             $('<div>', {id: divID + '-menu'}).addClass('map-menu').hide()
+        )
+        .append(
+            $('<div>', {id: divID + '-colorscale'})
+                .addClass('map-colorscale')
+                .hide()
         )
     ;
 
@@ -118,9 +142,9 @@ function mapView(divID){
 
     // define map attribution
     var mapAttribution = 
-        '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> | ' +
-        '<a href="http://www.cr.chiba-u.jp/english/">CEReS</a>, Chiba University | ' +
-        '<a href="http://www.naturalearthdata.com/">Natural Earth</a>'
+        '<a href="http://www.cr.chiba-u.jp/english/" target="_blank">CEReS</a>, Chiba University | ' +
+        '<a href="http://www.naturalearthdata.com/" target="_blank">Natural Earth</a> || ' +
+        '<a href="http://neoatlantis.org/mtsat-2.html" target="_blank">使用条款和说明</a>'
     ;
 
     // initialize the map instance
@@ -222,13 +246,13 @@ function mapView(divID){
                 text += '全部';
             value = null;
         } else if('colorify' == name){
-            if(null === value){
-                text += '黑白';
-                value = false;
-            } else {
-                text += (value?'色彩强化':'黑白');
-                value = true;
-            };
+            var channelName = dataChannelList[dataChannel];
+            text += colorscale[
+                dataColorify[channelName].methods[
+                    dataColorify[channelName].pointer
+                ]
+            ].name;
+            value = null;
         } else
             text = value;
 
@@ -379,6 +403,51 @@ function mapView(divID){
     //   being hide.
 
     var cloudAtlasLayers = {};
+    function updateColorScale(newCloudAtlasDrawn){
+        var channelName = dataChannelList[dataChannel];
+        var colorscaleName = dataColorify[channelName].methods[
+                dataColorify[channelName].pointer
+            ],
+            colorscaleFunc = colorscale[colorscaleName].func,
+            labelFunc = colorscale[colorscaleName].convertGrayscale
+        ;
+        var container = $('.map-colorscale');
+        if(!newCloudAtlasDrawn) return container.hide();
+        container.show();
+
+        if(!container.data('initialized')){
+            container.empty();
+            for(var i=0; i<=240; i+=2){
+                var elementID = 'map-colorscale-line-' + i;
+                var element = $('<div>', {id: elementID})
+                    .appendTo(container)
+                    .addClass('map-colorscale-line')
+                    .data('grayscale', i)
+                    .data('opentip', new Opentip('#' + elementID, {
+                        target: '#' + elementID,
+                        tipJoint: 'right',
+                        group: 'colorscale',
+                        delay: 0,
+                        hideDelay: 0,
+                    }))
+                ;
+            };
+            container.data('initialized', true);
+        };
+
+        container.find('.map-colorscale-line').each(function(){
+            var i = $(this).data('grayscale');
+            var color = [i,i,i,0];
+            colorscaleFunc(color);
+            $(this)
+                .css(
+                    'background-color', 
+                    'rgb(' + color.slice(0,3).join(',') + ')'
+                )
+            ;
+            $(this).data('opentip').setContent(labelFunc(i));
+        });
+    };
     this.toggleCloudAtlas = function(d12){
         var filename = dataFileName[d12], 
             channel = dataChannelList[dataChannel];
@@ -392,6 +461,7 @@ function mapView(divID){
         if(!d12 || !filename){
             for(var i in cloudAtlasLayers)
                 map.removeLayer(cloudAtlasLayers[i]);
+            updateColorScale(false);
             return;
         };
 
@@ -404,6 +474,7 @@ function mapView(divID){
             });
             canvasTiles.drawTile = function(canvas, tilePoint, zoom){
                 var countMax = 1 << zoom;
+                var channelName = dataChannelList[dataChannel];
                 var ctx = canvas.getContext('2d');
                 // draw something on the tile canvas
 
@@ -417,25 +488,17 @@ function mapView(divID){
                     .replace('{y}', String(tilePoint.y % countMax))
                     .replace('{f}', imgFormat)
                 ;
+                var colorscaleName = dataColorify[channelName].methods[
+                        dataColorify[channelName].pointer
+                    ],
+                    colorscaleFunc = colorscale[colorscaleName].func
+                ;
+                    
                 img.src = url; 
                 img.onload = function(){
-                    var colorscaleName;
-
                     ctx.drawImage(img, 0, 0, 256, 256);
-
-                    if('VIS' == chn)
-                        colorscaleName = 'VIS';
-                    else
-                        if(!dataColorify)
-                            colorscaleName = 'GREY';
-                        else 
-                            if('IR3' == chn)
-                                colorscaleName = 'IR-WV';
-                            else
-                                colorscaleName = 'IR-COLOR';
-
                     var imgdata = ctx.getImageData(0, 0, 256, 256);
-                    colorscale[colorscaleName](imgdata.data);
+                    colorscaleFunc(imgdata.data);
                     ctx.putImageData(imgdata, 0, 0);
                 };
             };
@@ -444,12 +507,15 @@ function mapView(divID){
             var canvasTiles = cloudAtlasLayers[filename];
         };
 
+        var newCloudAtlasDrawn = false;
         for(var i in cloudAtlasLayers){
-            if(i == filename)
+            if(i == filename){
                 cloudAtlasLayers[i].addTo(map);
-            else
+                newCloudAtlasDrawn = true;
+            } else
                 map.removeLayer(cloudAtlasLayers[i]);
         };
+        updateColorScale(newCloudAtlasDrawn);
         return self;
     };
 
@@ -491,9 +557,13 @@ function mapView(divID){
 
     // enable or disable colorify
     self.toggleColorify = function(){
-        if('VIS' == dataChannelList[dataChannel]) return;
-        dataColorify = !dataColorify;
-        showStatus('colorify', dataColorify);
+        var channelName = dataChannelList[dataChannel];
+        var pointer = dataColorify[channelName].pointer;
+        var methods = dataColorify[channelName].methods;
+        pointer++;
+        if(pointer > methods.length - 1) pointer = 0;
+        dataColorify[channelName].pointer = pointer;
+        showStatus('colorify', 'useless-value-for-updating');
         clearCloudAtlasCache();
         updateCloudAtlas();
     };
@@ -565,10 +635,7 @@ function mapView(divID){
     showStatus('channel').click(function(){
         dataChannel = (dataChannel + 1) % dataChannelList.length;
         showStatus('channel', dataChannel);
-        if('VIS' == dataChannelList[dataChannel])
-            showStatus('colorify', null);
-        else
-            showStatus('colorify', dataColorify);
+        showStatus('colorify', 'useless-value-for-updating');
         updateCloudAtlas();
     });
 

@@ -3,6 +3,9 @@
 # get date marker, e.g. 201411
 _DATEMONTH=`date -u +%Y%m`
 
+# generate index
+ls -1 site/data > site/data/index.txt
+
 echo "Clearing tasks for month $_DATEMONTH ..."
 
 # call task generator to generate tasks

@@ -19,8 +19,10 @@
     <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.structure.min.css" />
     <link rel="stylesheet" href="./static/jquery-ui/jquery-ui.theme.min.css" />
 
+    <link rel="stylesheet" href="./static/tooltip.css" />
     <link rel="stylesheet" href="./static/leaflet.css" />
     <link rel="stylesheet" href="./static/leaflet.draw.css" />
+    <link rel="stylesheet" href="./static/map.css" />
 
     <style> 
         body{
@@ -57,60 +59,6 @@
             cursor: crosshair !important;
         }
 
-        .map-status-box {
-            display: inline-block;
-            border: #999999 2px ridge;
-            color: #000000;
-            font-size: 11pt;
-            height: 28px;
-            line-height: 28px;
-            padding-left: 0.5em;
-            padding-right: 0.5em;
-            min-width: 7em;
-            text-align: center;
-            
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        .map-status {
-            background-color: #999999;
-            padding: 0px;
-            height: 32px;
-            text-align: right;
-            cursor: pointer;
-        }
-
-        .map-status-disabled {
-            color: #666666;
-        }
-
-        .map-status-not-link {
-            cursor: not-allowed;
-        }
-
-        .map-menu{
-            position: fixed;
-            bottom: 32px;
-            right: 0px;
-            z-index: 99999999;
-            background-color: #999999;
-            padding: 3px;
-            border: #999999 2px ridge;
-            overflow-y: auto;
-            overflow-x: hidden;
-            max-height: 60%;
-        }
-
-        .map-menu-item{
-            padding: 3px;
-            width: 20em;
-        }
-
         #start{
             color: #FFFFFF;
             padding: 1.0em;
@@ -123,5 +71,10 @@
         请启用，否则无法使用数据浏览器的任何功能。
     </div>-->
     <div id="map" class="hidden"></div>
+
+    <script type="text/javascript">
+        var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+        document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3Fd8359722ab4ce92bb4053adf719d0e5e' type='text/javascript' async%3E%3C/script%3E"));
+    </script>
 </body>
 </html>

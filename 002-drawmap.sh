@@ -1,15 +1,12 @@
 #!/bin/bash
 
-# get date marker, e.g. 201411
-_DATEMONTH=`date -u +%Y%m`
-
 # generate index
 ls -1 site/data > site/data/index.txt
 
-echo "Clearing tasks for month $_DATEMONTH ..."
+echo "Clearing tasks..."
 
 # call task generator to generate tasks
-python task.py $_DATEMONTH 
+python task.py
 
 # generate index
 ls -1 site/data > site/data/index.txt

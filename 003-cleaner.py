@@ -54,15 +54,8 @@ if os.path.isdir(dataPath):
     removeList += dataOldList
 
 if os.path.isdir(mirrorPath):
-    mirrorMonthList = os.listdir(mirrorPath)
-    thisMonth = time.strftime('%Y%m', time.gmtime())
-    for mirrorMonth in mirrorMonthList:
-        if mirrorMonth != thisMonth:
-            removeList.append(os.path.join(mirrorPath, mirrorMonth))
-    # remove files in this month
-    thisMonthPath = os.path.join(mirrorPath, thisMonth)
-    thisMonthOldList = filterOldFile(thisMonthPath, MIRROR_MAX)
-    removeList += thisMonthOldList
+    mirrorOldList = filterOldFile(mirrorPath, MIRROR_MAX)
+    removeList += mirrorOldList
 
 
 doRemove = False

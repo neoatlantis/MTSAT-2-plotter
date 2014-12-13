@@ -12,10 +12,9 @@ import sys
 startTime = time.time()
 
 try:
-    DATEMONTH = sys.argv[1]
     currentPath = os.path.realpath(os.path.dirname(sys.argv[0]))
 
-    mirrorPathBase = os.path.join(currentPath, 'site', 'mirror', DATEMONTH)
+    mirrorPathBase = os.path.join(currentPath, 'site', 'mirror')
     dirList = os.listdir(mirrorPathBase)
     
     mirrorList = []

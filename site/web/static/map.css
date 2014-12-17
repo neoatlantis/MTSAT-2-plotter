@@ -52,6 +52,11 @@
     width: 20em;
 }
 
+.map-menu-item-selected{
+    background: #0000CC;
+    color: #FFFFFF;
+}
+
 .map-colorscale{
     position: fixed;
     top: 5px;

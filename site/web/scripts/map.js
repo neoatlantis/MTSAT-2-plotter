@@ -585,6 +585,7 @@ function mapView(divID){
             else
                 target.hide();
         };
+        $('.map-menu-item').click();
         return menuStatus;
     };
 
@@ -697,6 +698,17 @@ function mapView(divID){
                         .text(date12ToStr(d12))
                 )
                 .addClass('map-menu-item')
+                .on('click', function(){
+                    var checked = (
+                        ($(this).find('input:checked').length > 0) &&
+                        (!$(this).find('input').attr('disabled'))
+                    );
+                    if(checked){
+                        $(this).addClass('map-menu-item-selected');
+                    } else {
+                        $(this).removeClass('map-menu-item-selected');
+                    }
+                })
             );
         };
         menuListFilter();

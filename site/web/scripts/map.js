@@ -585,6 +585,7 @@ function mapView(divID){
             else
                 target.hide();
         };
+        if(!menuStatus) menuListChanged();
         $('.map-menu-item').click();
         return menuStatus;
     };
@@ -620,7 +621,6 @@ function mapView(divID){
     });
     showStatus('datetime').click(function(e){
         self.toggleMenu();
-        menuListChanged();
         e.stopPropagation();
     });
     showStatus('datetime-next').click(function(){
@@ -756,10 +756,7 @@ function mapView(divID){
     };
 
     $('body').click(function(){
-        if(menuStatus){
-            self.toggleMenu(false);
-            menuListChanged();
-        };
+        if(menuStatus) self.toggleMenu(false);
     });
 
     updateCloudAtlas();

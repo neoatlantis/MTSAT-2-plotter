@@ -38,6 +38,10 @@
 
                     $('#UTC-time').text(str);
                 }, 100);
+
+                $('#move-to-browser').click(function(){
+                    window.location.href="/web/browser.html";
+                });
             });
         </script>
 
@@ -73,6 +77,22 @@
         (CN) 本站提供的卫星图像现需经<a href="/web/browser.html">数据浏览器</a>显示，这里只提供1天之内的原始数据下载！请移步或阅读<a href="//neoatlantis.org/mtsat-2.html" target="_blank">使用条款和说明</a>。<br />
         (EN) Satellite images are now to be viewed with <a href="/web/browser.html">data browser</a>, there will be only downloads of original data not older than 1 day provided here! Please move, or read the <a href="//neoatlantis.org/mtsat-2.html">Terms of Service</a>(Chinese).<br />
         (DE) Satellitenbilder sind derzeit mit <a href="/web/browser.html">Datenbrowser</a> abzurufen. Hier wird nur das Herunterladen der Originaldaten die nicht älter als einen Tag sind angeboten. Gehen Sie weiter, oder die <a href="//neoatlantis.org/mtsat-2.html">Allgemeinen Nutzungsbedingungen</a>(Chinesisch) lesen.
+        <center>
+            <br />
+            <a 
+                href="/web/browser.html"
+            >
+                <button
+                    id="move-to-browser"
+                    type="button"
+                    style="width: 40em; height: 5em; border: #FFFFFF 3px ridge; background-color: #990000; color: #FFFFFF"
+                >
+                &gt;&gt; 进入数据浏览器 查看卫星云图 &lt;&lt;<br />
+                &gt;&gt; Enter the data browser and View the cloud atlas &lt;&lt;<br />
+                &gt;&gt; Weiter zum Datenbrowser und die Satellitenbilder ansehen &lt;&lt;
+                </button>
+            </a>
+        </center>
     </div>
 
     <p align="center" id="UTC-time">UTC时间</p>

@@ -19,7 +19,7 @@ define([
 
 /* define some utilities */
 function floatToDegree(f, latLng){
-    function twoDigits(x){return ((x>10)?String(x):'0' + String(x));};
+    function twoDigits(x){return ((x>=10)?String(x):'0' + String(x));};
     var str = '', negative=false;
     if('lat' == latLng){
         if(0 == f) return '赤道';

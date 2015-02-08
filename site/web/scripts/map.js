@@ -532,6 +532,12 @@ function mapView(divID){
             'color': '#FF0000',
             'opacity': '0.8',
         });
+        var s3 = toggleGeoJSON('alarmzone', {
+            'weight': '1.5px',
+            'color': '#00FFFF',
+            'opacity': '0.8',
+            'dashArray': '5 5',
+        });
         showStatus('regionlines', s1 || s2);
         return self;
     };

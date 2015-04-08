@@ -153,11 +153,12 @@ class plotter:
         imgDraw.line([(drawX-size, drawY-size), (drawX+size, drawY+size)], fill=color, width=2)
         imgDraw.line([(drawX-size, drawY+size), (drawX+size, drawY-size)], fill=color, width=2)
 
-    def plotCoastlines(self, imgColor):
+    def _plotShape(self, imgColor, filename):
 #        imgR, imgG, imgB = imgColor.split()
         imgDraw = ImageDraw.Draw(imgColor)
         latN, lngW, latS, lngE = self.sourceRegion
-        coastline = shapefile.Reader('coastline/ne_50m_coastline')
+        coastline = shapefile.Reader('shapes/' + filename)
+        boldness = 5
 
         for each in coastline.shapes():
             points = each.points
@@ -173,10 +174,16 @@ class plotter:
             lastLng, lastLat = points[0]
             for lng, lat in points:
                 if self.__withinSourceRegion(lat, lng):
-                    self._lineColor(imgDraw, lastLat, lastLng, lat, lng, 0, 1)
+                    self._lineColor(imgDraw, lastLat, lastLng, lat, lng, 0, boldness)
                 lastLng, lastLat = lng, lat
 #        img = Image.merge('RGB', (imgR, imgG, imgB))
         return imgColor
+
+    def plotCoastlines(self, imgColor):
+        return self._plotShape(imgColor, 'ne_50m_coastline')
+
+    def plotCountryBoundaries(self, imgColor):
+        return self._plotShape(imgColor, 'ne_50m_admin_0_countries')
 
     def plotCoordinate(self, imgColor):
 #        imgR, imgG, imgB = imgColor.split()

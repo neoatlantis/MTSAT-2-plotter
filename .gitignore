@@ -12,4 +12,5 @@ converter
 debug*
 sendcache
 config
-shapes
+resources
+.directory

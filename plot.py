@@ -139,7 +139,7 @@ class plotter:
 
     def _drawText(self, imgDraw, lat, lng, offsetX, offsetY, text, font, color):
         drawX, drawY = self.__project(lat, lng)
-        imgDraw.text((drawX + offsetX, drawY + offsetY), str(text), font=font, fill=color)
+        imgDraw.text((drawX + offsetX, drawY + offsetY), text, font=font, fill=color)
 
     def _drawCross(self, imgDraw, lat, lng, size, color):
         drawX, drawY = self.__project(lat, lng)
@@ -153,12 +153,58 @@ class plotter:
         imgDraw.line([(drawX-size, drawY-size), (drawX+size, drawY+size)], fill=color, width=2)
         imgDraw.line([(drawX-size, drawY+size), (drawX+size, drawY-size)], fill=color, width=2)
 
-    def _plotShape(self, imgColor, filename):
+    def plotCities(self, imgColor, color=0, factor=2):
+        imgDraw = ImageDraw.Draw(imgColor)
+
+        f = open("resources/cncities.txt", 'r').read().decode('utf-8')
+        flines = f.split('\n')
+        for line in flines:
+            if not line: break
+            lineSplit = line.split(u',')
+#            if len(lineSplit) != 19: continue
+
+            cityName = lineSplit[0]
+            cityLat = float(lineSplit[1])
+            cityLng = float(lineSplit[2])
+            if not self.__withinSourceRegion(cityLat, cityLng): continue
+
+            """size = False
+            if cityRole == 'PPLC':
+                size = 2
+            elif cityCountry == 'CN':
+                if cityRole == 'PPLA':
+                    size = 1.5
+                elif cityRole == 'PPLA2':
+                    size = 1.0
+            if not size: continue"""
+            size = 1
+            
+            size = int(size * factor)
+            font = ImageFont.truetype(\
+                'resources/font.ttf', 
+                size=size, 
+                encoding="unic"
+            )
+            textsize = font.getsize(cityName)
+
+            self._drawText(\
+                imgDraw,
+                cityLat,
+                cityLng,
+                -textsize[0] / 2,     # offset X
+                -textsize[1] / 2,     # offset Y
+                cityName,
+                font,
+                color
+            )
+
+        return imgColor
+
+    def _plotShape(self, imgColor, filename, color=0, boldness=5):
 #        imgR, imgG, imgB = imgColor.split()
         imgDraw = ImageDraw.Draw(imgColor)
         latN, lngW, latS, lngE = self.sourceRegion
-        coastline = shapefile.Reader('shapes/' + filename)
-        boldness = 5
+        coastline = shapefile.Reader('resources/' + filename)
 
         for each in coastline.shapes():
             points = each.points
@@ -174,16 +220,16 @@ class plotter:
             lastLng, lastLat = points[0]
             for lng, lat in points:
                 if self.__withinSourceRegion(lat, lng):
-                    self._lineColor(imgDraw, lastLat, lastLng, lat, lng, 0, boldness)
+                    self._lineColor(imgDraw, lastLat, lastLng, lat, lng, color, boldness)
                 lastLng, lastLat = lng, lat
 #        img = Image.merge('RGB', (imgR, imgG, imgB))
         return imgColor
 
-    def plotCoastlines(self, imgColor):
-        return self._plotShape(imgColor, 'ne_50m_coastline')
+    def plotCoastlines(self, imgColor, color=0):
+        return self._plotShape(imgColor, 'ne_50m_coastline', color)
 
-    def plotCountryBoundaries(self, imgColor):
-        return self._plotShape(imgColor, 'ne_50m_admin_0_countries')
+    def plotCountryBoundaries(self, imgColor, color=0):
+        return self._plotShape(imgColor, 'ne_50m_admin_0_countries', color)
 
     def plotCoordinate(self, imgColor):
 #        imgR, imgG, imgB = imgColor.split()
@@ -225,6 +271,43 @@ class plotter:
                 self._drawText(imgDraw, 0, lng, -textW-2, 2, strlng, font, 0)
         
         return imgColor
+
+    def equalize(self, img):
+        return ImageOps.equalize(img)
+
+    def crop(self, img, cropRegion):
+        cropN, cropW, cropS, cropE = cropRegion
+        drawW, drawH = self.dataDimension
+
+        pointLT = self.__project(cropN, cropW)
+        pointRB = self.__project(cropS, cropE)
+        pointL, pointT = pointLT
+        pointR, pointB = pointRB
+        cropPointW, cropPointH = pointR - pointL, pointB - pointT
+        if cropPointW <= 0 or cropPointH <= 0:
+            print cropPointW, cropPointH, 'w,h'
+            raise Exception('Wrong parameter specified!')
+
+        # see if the region is inside our image, otherwise return None
+        if (0 - pointL) * (drawW - pointL) > 0 and (0 - pointR) * (drawW - pointR) > 0:
+            return None
+        if (0 - pointT) * (drawH - pointT) > 0 and (0 - pointB) * (drawH - pointB) > 0:
+            return None 
+
+        pasteX, pasteY = 0, 0
+        if pointR > drawW:
+            pointR = drawW
+        if pointB > drawH:
+            pointB = drawH
+        if pointL < 0:
+            pasteX = -pointL
+            pointL = 0
+        if pointT < 0:
+            pasteY = -pointT
+            pointT = 0
+
+        cropImage = img.crop((pointL, pointT, pointR, pointB))
+        return cropImage
 
     def cropAndResize(self, img, cropRegion):
         cropN, cropW, cropS, cropE = cropRegion

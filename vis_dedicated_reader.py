@@ -16,6 +16,11 @@ from split import splitter
 from colorscale import Grayscale as COLORSCALE_IR
 from colorscale import VIS as COLORSCALE_VIS
 
+from vis_dedicated_postprocess import postProcess
+
+
+
+
 try:
     tar = tarfile.open(sys.argv[1], 'r:bz2')
 except:
@@ -105,14 +110,8 @@ for each in geossFile:
     print "> Plotting data..."
     img = p.plotData(source)
 
-    print "> Adding coastlines..."
-    img = p.plotCoastlines(img)
-
-#    print "> Adding country boundaries..."
-#    img = p.plotCountryBoundaries(img)
-
-    #print "> Adding coordinate lines..."
-    #img = p.plotCoordinate(img)
+    print "> Post process image"
+    img = postProcess(img, p)
 
     imgSavePath = os.path.join(outputPath, filename)
     img.save(imgSavePath)

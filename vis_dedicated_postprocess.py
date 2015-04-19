@@ -8,6 +8,9 @@ def postProcess(img, p):
     print "> Adding coastlines..."
     img = p.plotCoastlines(img, 0) #, "rgb(255,0,0)")
 
+    #print "> Adding province borders..."
+    #img = p.plotProvinces(img, 0)
+
     #print "> Adding cities..."
     #img = p.plotCities(img, 0, 14) #, "rgb(255,0,0)")
 

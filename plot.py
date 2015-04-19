@@ -156,29 +156,24 @@ class plotter:
     def plotCities(self, imgColor, color=0, factor=2):
         imgDraw = ImageDraw.Draw(imgColor)
 
-        f = open("resources/cncities.txt", 'r').read().decode('utf-8')
+        f = open("resources/cncities.csv", 'r').read().decode('utf-8')
         flines = f.split('\n')
         for line in flines:
             if not line: break
             lineSplit = line.split(u',')
 #            if len(lineSplit) != 19: continue
 
-            cityName = lineSplit[0]
+            cityName = lineSplit[3]
             cityLat = float(lineSplit[1])
-            cityLng = float(lineSplit[2])
+            cityLng = float(lineSplit[0])
+            cityLevel = int(lineSplit[2])
             if not self.__withinSourceRegion(cityLat, cityLng): continue
 
-            """size = False
-            if cityRole == 'PPLC':
-                size = 2
-            elif cityCountry == 'CN':
-                if cityRole == 'PPLA':
-                    size = 1.5
-                elif cityRole == 'PPLA2':
-                    size = 1.0
-            if not size: continue"""
-            size = 1
-            
+            if cityLevel == 4:
+                size = 1
+            else:   
+                size = 0.7
+
             size = int(size * factor)
             font = ImageFont.truetype(\
                 'resources/font.ttf', 
@@ -197,6 +192,26 @@ class plotter:
                 font,
                 color
             )
+                
+
+        return imgColor
+
+    def plotProvinces(self, imgColor, color=0):
+        imgDraw = ImageDraw.Draw(imgColor)
+
+        f = open("resources/provinces.csv", 'r').read().decode('utf-8')
+        flines = f.split(u'\n')
+        for line in flines:
+            if not line: break
+            lineSplit = line.strip().split(u',')
+            if len(lineSplit) < 2:
+                continue
+
+            lat = float(lineSplit[1])
+            lng = float(lineSplit[0])
+            if not self.__withinSourceRegion(lat, lng): continue
+
+            self._drawXCross(imgDraw, lat, lng, 2, color)
 
         return imgColor
 

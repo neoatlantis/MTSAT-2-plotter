@@ -538,6 +538,12 @@ function mapView(divID){
             'opacity': '0.8',
             'dashArray': '5 5',
         });
+        var s3 = toggleGeoJSON('provinces', {
+            'weight': '1.5px',
+            'color': '#FF0000',
+            'opacity': '0.8',
+            'dashArray': '2 2',
+        });
         showStatus('regionlines', s1 || s2);
         return self;
     };

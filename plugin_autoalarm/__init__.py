@@ -149,7 +149,6 @@ def checkAlarm(img, alarm):
     result = []
     if alarm.has_key("Tbb"):
         TbbRule = alarm["Tbb"]
-        print "#1"
         threshold = TbbRule["threshold"]
         percent = TbbRule["percent"]
         hgram = img.histogram()

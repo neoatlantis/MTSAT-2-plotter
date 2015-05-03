@@ -120,6 +120,9 @@ class plotter:
         drawY = self.dataDimension[1] / 2 - lat / self.dataResolution[0]
         return int(drawX), int(drawY)
 
+    def project(self, p):
+        return self.__project(*p)
+
     def plotData(self, dataString):
         # plot data
         #   dataDimension := (X-points, Y-points), given by MTSAT-2
@@ -244,7 +247,7 @@ class plotter:
         return imgColor
 
     def plotChina(self, imgColor, color=0, boldness=5):
-        return self._plotGeoJSON(imgColor, 'china_border', color)
+        return self._plotGeoJSON(imgColor, 'china_border', color, boldness)
 
     """
     def plotProvinces(self, imgColor, color=0, boldness=5):

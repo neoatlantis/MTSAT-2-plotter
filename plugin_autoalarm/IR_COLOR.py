@@ -74,5 +74,4 @@ def getPaletteColor(Tbb):
     if celsius < -90:
         celsius = -90.0
     index = int((celsius + 90.0) * 2) + 1
-    print "index", index
     return index

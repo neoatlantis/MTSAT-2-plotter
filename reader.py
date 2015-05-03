@@ -126,3 +126,18 @@ for each in geossFile:
         splitter(p, imgSavePath, img, maxZoom=maxZoomLevel)
     except Exception,e:
         print "!> Error: %s" % e
+
+    ##################### Load Plugins to Read ###########################
+
+    try:
+        from plugin_autoalarm import plugin_autoalarm
+        plugin_autoalarm(
+            image=img,
+            channel=CHANNEL,
+            time=TIME,
+            dk=DK,
+            filename=filename,
+            plotter=p,
+        )
+    except Exception, e:
+        print "Plugin Error: %s" % e

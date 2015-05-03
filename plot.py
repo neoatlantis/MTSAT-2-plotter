@@ -17,6 +17,8 @@ this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 import array
 import math
+import json
+
 from PIL import Image, ImageDraw, ImageEnhance, ImageOps, ImageFont
 
 import shapefile
@@ -153,6 +155,12 @@ class plotter:
         imgDraw.line([(drawX-size, drawY-size), (drawX+size, drawY+size)], fill=color, width=2)
         imgDraw.line([(drawX-size, drawY+size), (drawX+size, drawY-size)], fill=color, width=2)
 
+    def _drawCircle(self, imgDraw, lat, lng, size, width, color):
+        drawX, drawY = self.__project(lat, lng)
+        size = size / 2
+        for i in xrange(0, width):
+            imgDraw.arc([(drawX-size+i, drawY-size+i), (drawX+size-i, drawY+size-i)], 0, 360, fill=color)
+
     def plotCities(self, imgColor, color=0, factor=2):
         imgDraw = ImageDraw.Draw(imgColor)
 
@@ -210,10 +218,38 @@ class plotter:
             lat = float(lineSplit[1])
             lng = float(lineSplit[0])
             if not self.__withinSourceRegion(lat, lng): continue
-
-            self._drawXCross(imgDraw, lat, lng, 2, color)
+            self._drawCircle(imgDraw, lat, lng, 5, 2, color)
 
         return imgColor
+
+    def _plotGeoJSON(self, imgColor, filename, color=0, boldness=5):
+        imgDraw = ImageDraw.Draw(imgColor)
+        latN, lngW, latS, lngE = self.sourceRegion
+        geojson = json.loads(open('resources/' + filename + '.json').read())
+
+        for group in geojson:
+            for points in group:
+                for lng, lat in points:
+                    if self.__withinSourceRegion(lat, lng):
+                        use = True
+                        break
+                if not use:
+                    continue
+                lastLng, lastLat = points[0]
+                for lng, lat in points[1:]:
+                    if self.__withinSourceRegion(lat, lng) and self.__withinSourceRegion(lastLat, lastLng):
+                        self._lineColor(imgDraw, lastLat, lastLng, lat, lng, color, boldness)
+                    lastLng, lastLat = lng, lat
+#        img = Image.merge('RGB', (imgR, imgG, imgB))
+        return imgColor
+
+    def plotChina(self, imgColor, color=0, boldness=5):
+        return self._plotGeoJSON(imgColor, 'china_border', color)
+
+    """
+    def plotProvinces(self, imgColor, color=0, boldness=5):
+        return self._plotGeoJSON(imgColor, 'provinces', color)
+    """
 
     def _plotShape(self, imgColor, filename, color=0, boldness=5):
 #        imgR, imgG, imgB = imgColor.split()
@@ -233,9 +269,9 @@ class plotter:
             if not use:
                 continue
             lastLng, lastLat = points[0]
-            for lng, lat in points:
-                if self.__withinSourceRegion(lat, lng):
-                    self._lineColor(imgDraw, lastLat, lastLng, lat, lng, color, boldness)
+            for lng, lat in points[1:]:
+                if not self.__withinSourceRegion(lat, lng): continue
+                self._lineColor(imgDraw, lastLat, lastLng, lat, lng, color, boldness)
                 lastLng, lastLat = lng, lat
 #        img = Image.merge('RGB', (imgR, imgG, imgB))
         return imgColor
@@ -244,7 +280,7 @@ class plotter:
         return self._plotShape(imgColor, 'ne_50m_coastline', color)
 
     def plotCountryBoundaries(self, imgColor, color=0):
-        return self._plotShape(imgColor, 'ne_50m_admin_0_countries', color)
+        return self._plotShape(imgColor, 'ne_10m_admin_0_countries', color)
 
     def plotCoordinate(self, imgColor):
 #        imgR, imgG, imgB = imgColor.split()

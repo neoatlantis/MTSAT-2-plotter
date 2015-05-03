@@ -172,6 +172,10 @@ def plugin_autoalarm(**argv):
     for zoneName in zones:
         for regionName in zones[zoneName]:
             region = zones[zoneName][regionName]
+            
+            requiredDK = region["DK"]
+            if int(argv["dk"]) not in requiredDK: continue
+
             regionNW, regionSE = region["region"]
             regionN, regionW = regionNW
             regionS, regionE = regionSE

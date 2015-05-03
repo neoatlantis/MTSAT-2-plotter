@@ -10,6 +10,7 @@ zones["ASLAB"] = {
     "40km": {
         "title": u"越城岭天文台半径 40km IR1 红外云图",
         "region": ((ASLAB_CENTER_LAT+0.36, ASLAB_CENTER_LNG-0.4), (ASLAB_CENTER_LAT-0.36, ASLAB_CENTER_LNG+0.4)),
+        "DK": [1,2], # use which type of scan
         "alarm": {
             "Tbb": {
                 "threshold": -30.0,
@@ -21,6 +22,7 @@ zones["ASLAB"] = {
     "100km": {
         "title": u"越城岭天文台半径 100km IR1 红外云图",
         "region": ((ASLAB_CENTER_LAT+0.9, ASLAB_CENTER_LNG-1), (ASLAB_CENTER_LAT-0.9, ASLAB_CENTER_LNG+1)),
+        "DK": [1,2],
         "alarm": {
             "Tbb": {
                 "threshold": -50.0,
@@ -32,6 +34,7 @@ zones["ASLAB"] = {
     "400km": {
         "title": u"越城岭天文台半径 400km IR1 红外云图",
         "region": ((ASLAB_CENTER_LAT+3.6, ASLAB_CENTER_LNG-4), (ASLAB_CENTER_LAT-3.6, ASLAB_CENTER_LNG+4)),
+        "DK": [1,2],
         "alarm": {
             "Tbb": {
                 "threshold": -50.0,
@@ -43,6 +46,7 @@ zones["ASLAB"] = {
     "800km": {
         "title": u"越城岭天文台半径 800km IR1 红外云图",
         "region": ((ASLAB_CENTER_LAT+7.3, ASLAB_CENTER_LNG-8), (ASLAB_CENTER_LAT-7.3, ASLAB_CENTER_LNG+8)),
+        "DK": [1,2],
         "alarm": {
             "Tbb": {
                 "threshold": -50.0,

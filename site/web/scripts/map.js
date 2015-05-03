@@ -79,6 +79,7 @@ function mapView(divID){
         dataDateList = [],
         dataDate = 0,
         dataRegion = 0, // 0-full, 1-inc. North, 2-inc. South
+        dataGeoinfo = 0,
         dataFileName = {};
 
     var dataColorify = {
@@ -189,6 +190,7 @@ function mapView(divID){
 
     // status displayer outside the map
     var statusList = [
+        'geoinfo',
         'dragging',
         'graticules',
         'regionlines',
@@ -224,7 +226,9 @@ function mapView(divID){
         if(undefined === value) return $(selector);
 
         var text = '';
-        if('dragging' == name){
+        if('geoinfo' == name){
+            text += '地理信息';
+        } else if('dragging' == name){
             text += '鼠标拖动';
         } else if('graticules' == name){
             text += '经纬网';
@@ -264,6 +268,10 @@ function mapView(divID){
         $(selector).html(text);
     };
     for(var i=0; i<statusList.length; i++) showStatus(statusList[i], false);
+
+    /********************************************************************/
+    /* Controlling the overlay of geographical info */
+
 
     /********************************************************************/
     /* Internal functions for controlling map */
@@ -395,6 +403,46 @@ function mapView(divID){
 
     /********************************************************************/
     /* now the methods being exposed */
+
+
+    // show or hide a map representing geological information
+    var geoinfoCanvasTiles = null, showGeoinfoCanvas = false;
+    (function initGeoinfoCanvasTiles(){
+        var tileURL = "http://a.tile.stamen.com/toner/{z}/{x}/{y}.png";
+        geoinfoCanvasTiles = L.tileLayer.canvas({
+            maxZoom: mapZoomMax,
+            minZoom: mapZoomMin,
+            attribution: mapAttribution,
+        });
+        geoinfoCanvasTiles.drawTile = function(canvas, tilePoint, zoom){
+            var countMax = 1 << zoom;
+            var channelName = dataChannelList[dataChannel];
+            var ctx = canvas.getContext('2d');
+            // draw something on the tile canvas
+
+            var img = new Image();
+            var url = tileURL
+                .replace('{z}', String(zoom))
+                .replace('{x}', String(tilePoint.x % countMax))
+                .replace('{y}', String(tilePoint.y % countMax))
+            ;
+            img.src = url; 
+            img.onload = function(){
+                ctx.drawImage(img, 0, 0, 256, 256);
+                var imgdata = ctx.getImageData(0, 0, 256, 256);
+                ctx.putImageData(imgdata, 0, 0);
+            };
+        };
+    })();
+    this.toggleGeoinfo = function(){
+        showGeoinfoCanvas = !showGeoinfoCanvas;
+        showStatus('geoinfo', showGeoinfoCanvas);
+        if(!showGeoinfoCanvas){
+            map.removeLayer(geoinfoCanvasTiles);
+        } else {
+            geoinfoCanvasTiles.addTo(map);
+        };
+    };
 
 
     // show or hide a cloud atlas with given name
@@ -603,6 +651,7 @@ function mapView(divID){
     };
 
     // bind mouse events to status bars
+    showStatus('geoinfo').click(self.toggleGeoinfo);
     showStatus('dragging').addClass('map-status-not-link');
     showStatus('graticules').click(self.toggleGraticules);
     showStatus('regionlines').click(self.toggleRegionLines);

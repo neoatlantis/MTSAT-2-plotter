@@ -10,7 +10,7 @@ site/data
 site/mirror
 converter
 debug*
+resources
 sendcache
 config
-resources
 .directory

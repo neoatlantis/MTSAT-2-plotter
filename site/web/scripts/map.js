@@ -190,7 +190,7 @@ function mapView(divID){
 
     // status displayer outside the map
     var statusList = [
-        'geoinfo',
+        //'geoinfo',
         'dragging',
         'graticules',
         'regionlines',

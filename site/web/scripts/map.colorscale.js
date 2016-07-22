@@ -126,37 +126,37 @@ for(var t=0; t<=255; t++){
 
     i = grayscaleToTbb(t);
 
-    if(i < -85)
+    if(i <= -85)
         v = 100;
-    else if(i < -80){
+    else if(i <= -80){
         h = 240;
         s = 100;
         v = 60;
-    } else if(i < -75){
+    } else if(i <= -75){
         h = 225;
         s = 71;
         v = 88;
-    } else if(i < -69) {
+    } else if(i <= -69) {
         h = 195;
         s = 100;
-    } else if(i < -63){
+    } else if(i <= -63){
         h = 208;
         s = 37;
-    } else if(i < -53){
+    } else if(i <= -53){
         h = 51;
         s = 80;
-    } else if(i < -41){
+    } else if(i <= -41){
         h = 26;
         s = 100;
-    } else if(i < -30){
+    } else if(i <= -30){
         h = 0;
         s = 78;
         v = 63;
-    } else if(i < 9){
+    } else if(i <= 9){
         h = 0;
         s = 12 + (29 - 12) * (i + 30) / 39;
         v = 100 + (40 - 100) * (i + 30) / 39;
-    } else if(i < 27)
+    } else if(i <= 27)
         v = 100 + (0 - 100) * (i - 9) / (27 - 9);
     else
         v = 0;
@@ -296,32 +296,7 @@ ret["IR-BD-COLOR"] = {
             data[i+2] = got[2];
         };
     },
-    convertGrayscale: function(g){ // IR-BD-Color
-        var i = grayscaleToTbb(g);
-        var str1 = grayscaleToTbbLabel(g);
-        var str2;
-        if(i < -80)
-            str2 = 'CDG';
-        else if(i < -75)
-            str2 = 'CMG';
-        else if(i <= -69)
-            str2 = 'W';
-        else if(i < -63)
-            str2 = 'B';
-        else if(i <= -53)
-            str2 = 'LG';
-        else if(i < -41)
-            str2 = 'MG';
-        else if(i < -30)
-            str2 = 'DG';
-        else if(i < 9)
-            str2 = 'OW';
-        else if(i < 27)
-            str2 = 'WMG';
-        else
-            str2 = '';
-        return str1 + ' ' + str2;
-    },
+    convertGrayscale: grayscaleToTbbLabel,
 };
 
 ret['IR-WV'] = {

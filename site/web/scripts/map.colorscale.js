@@ -98,26 +98,16 @@ for(var t=0; t<=255; t++){
 
     i = grayscaleToTbb(t);
 
-    if(i < -81)
-        v = 26;
-    else if(i < -76)
-        v = 62;
-    else if(i < -70)
-        v = 100;
-    else if(i < -64)
-        v = 0;
-    else if(i < -54)
-        v = 72;
-    else if(i < -42)
-        v = 60;
-    else if(i < -31)
-        v = 36;
-    else if(i < 9)
-        v = 82 + (23 - 82) * (i + 30) / 39;
-    else if(i < 27)
-        v = 100 + (0 - 100) * (i - 9) / (27 - 9);
-    else
-        v = 0;
+    if(i <= -81) v = 26;
+    else if(i <= -76) v = 62;
+    else if(i <= -70) v = 100;
+    else if(i <= -64) v = 0;
+    else if(i <= -54) v = 72;
+    else if(i <= -42) v = 60;
+    else if(i <= -31) v = 36;
+    else if(i <= 9) v = 82 + (23 - 82) * (i + 30) / 39;
+    else if(i <= 27) v = 100 + (0 - 100) * (i - 9) / (27 - 9);
+    else v = 0;
 
     v /= 100;
 
@@ -275,24 +265,15 @@ ret["IR-BD"] = {
         var i = grayscaleToTbb(g);
         var str1 = grayscaleToTbbLabel(g);
         var str2;
-        if(i < -81)
-            str2 = 'CDG';
-        else if(i < -76)
-            str2 = 'CMG';
-        else if(i <= -70)
-            str2 = 'W';
-        else if(i < -64)
-            str2 = 'B';
-        else if(i <= -54)
-            str2 = 'LG';
-        else if(i < -42)
-            str2 = 'MG';
-        else if(i < -31)
-            str2 = 'DG';
-        else if(i < 9)
-            str2 = 'OW';
-        else if(i < 27)
-            str2 = 'WMG';
+        if(i <= -81) str2 = 'CDG';
+        else if(i <= -76) str2 = 'CMG';
+        else if(i <= -70) str2 = 'W';
+        else if(i <= -64) str2 = 'B';
+        else if(i <= -54) str2 = 'LG';
+        else if(i <= -42) str2 = 'MG';
+        else if(i <= -31) str2 = 'DG';
+        else if(i <= 9) str2 = 'OW';
+        else if(i <= 27) str2 = 'WMG';
         else
             str2 = '';
         return str1 + ' ' + str2;

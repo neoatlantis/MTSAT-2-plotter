@@ -41,8 +41,8 @@ int main(){
         };
     };
 
-    putchar(maxGray);
-    putchar(minGray);
+//    putchar(maxGray);
+//    putchar(minGray);
 
     fflush(stdout);
     return 0;

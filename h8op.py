@@ -14,8 +14,10 @@ from convfunc import getConversionFunction
 
 parser = argparse.ArgumentParser(\
     description="""
-A multi-purpose tool for downloading and generating high-resolution satellite
-images from Himawari-8. Developed by NeoAtlantis.
+    A multi-purpose tool for downloading and generating high-resolution
+    satellite images from Himawari-8. You need to ensure `wget`, `bunzip2` and
+    `cat` commands are available on this system. And you have to first use gcc
+    to compile the C converter: `gcc converter.c -o converter`
     """
 )
 
@@ -90,7 +92,7 @@ if 'list' == COMMAND:
     try:
         assert re.match('^[0-9]{4}(0[1-9]|10|11|12)$', DATE)
     except:
-        print "Invalid --date specification. Must be YYYYMM format."
+        print "Which month would you like to be listed? Use `--date YYYYMM`."
         sys.exit(1)
 
 TIMESTAMP = args.timestamp
@@ -98,7 +100,7 @@ if 'download' == COMMAND:
     try:
         assert re.match('^[0-9]{12}$', TIMESTAMP)
     except:
-        print "Invalid --timestamp specification. Must be 12-digits."
+        print "From which time should the data originate? Use `--timestamp YYYYmmDDHHMM`."
         sys.exit(1)
 
 CHANNELNAME, CHANNELID = '', -1 
@@ -109,7 +111,7 @@ if args.channel:
         print "You must specify the full channel representation, e.g. XXXYY"
         sys.exit(1)
 elif COMMAND in ['download', 'list']:
-    print "You must also specify the channel. Use --channel argument."
+    print "You must specify the channel. Use --channel argument."
     sys.exit(1)
 
 inputFile = args.input

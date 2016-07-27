@@ -8,7 +8,8 @@ import subprocess
 from pipes import quote
 
 from calibtable import getCalibrationTable
-from convfunc import getConversionFunction
+from convfunc import getConverter
+from ppm_colorscale import generatePPMColorscale
 
 ##############################################################################
 
@@ -23,13 +24,14 @@ parser = argparse.ArgumentParser(\
 
 parser.add_argument(
     'command',
-    choices=['list', 'download', 'draw'],
+    choices=['list', 'download', 'draw', 'cook'],
     help="""What would you like to do with this tool. For `list`, the program
     will connect to the FTP server located at <hmwr829gr.cr.chiba-u.ac.jp> and
     list available tarballs for downloading. For `download` with given argument
     on timestamp and channel, a tarball will be downloaded. For `draw`, specify
     a downloaded tarball, this tool will generate a PGM grey scale picture
-    using its data.
+    using its data. `cook` is similar to download except that it draws
+    automatically after download.
     """
 )
 
@@ -49,11 +51,11 @@ parser.add_argument(
     action='store',
     type=str,
     required=False,
-    help="""Required when `download` is choosen. Specify a timestamp of the
-    data being transmitted. The timestamp must consist 12 digits in format of
-    YYYYmmDDHHMM, e.g. a 4-digits year, a 2-digits month, a 2-digits day, and
-    hour as well as minute in 2-digits each. Example: 201606010230. The
-    timestamp is UTC.
+    help="""Required when `download` or `cook` is choosen. Specify a timestamp
+    of the data being transmitted. The timestamp must consist 12 digits in
+    format of YYYYmmDDHHMM, e.g. a 4-digits year, a 2-digits month, a 2-digits
+    day, and hour as well as minute in 2-digits each. Example: 201606010230.
+    The timestamp is UTC.
     """
 )
 
@@ -67,10 +69,10 @@ parser.add_argument(
     ],
     required=False,
     help="""
-        Required when `download` or `list` is choosen.  Choose a channel. To
-        `list`, just one choice out of `ext`, `vis`, `sir`, `tir` is enough. To
-        `download`, you must also specify the channel ID, e.g. 01-10 depending
-        on channel choice.
+        Required when `download`, `list` or `cook` is choosen.  Choose a
+        channel. To `list`, just one choice out of `ext`, `vis`, `sir`, `tir`
+        is enough. To `download`, you must also specify the channel ID, e.g.
+        01-10 depending on channel choice.
     """
 )
 
@@ -81,6 +83,12 @@ parser.add_argument(
     help="""Required when `draw` is choosen. Give the input file name. Can be
     either a `.geoss`(decompressed) or `.geoss.bz2`(compressed) file.
     """
+)
+
+parser.add_argument(
+    '--color',
+    action='store',
+    required=False
 )
 
 args = parser.parse_args()
@@ -96,7 +104,7 @@ if 'list' == COMMAND:
         sys.exit(1)
 
 TIMESTAMP = args.timestamp
-if 'download' == COMMAND:
+if COMMAND in ['download', 'cook']:
     try:
         assert re.match('^[0-9]{12}$', TIMESTAMP)
     except:
@@ -114,6 +122,8 @@ elif COMMAND in ['download', 'list']:
     print "You must specify the channel. Use --channel argument."
     sys.exit(1)
 
+COLOR = args.color
+
 inputFile = args.input
 
 ##############################################################################
@@ -125,7 +135,7 @@ if 'list' == COMMAND:
     listHMWR8(DATE, CHANNELNAME)
     sys.exit()
 
-if 'download' == COMMAND:
+if COMMAND in ['download', 'cook']:
     filename = '%s.%s.%02d.fld.geoss.bz2' % (
         TIMESTAMP, CHANNELNAME.lower(), CHANNELID, 
     )
@@ -133,7 +143,11 @@ if 'download' == COMMAND:
         TIMESTAMP[:6], CHANNELNAME, filename
     )
     subprocess.call(['wget', url])
-    sys.exit()
+    inputFile = os.path.realpath('./' + filename)
+    if not os.path.isfile(inputFile):
+        print "Download failed."
+        sys.exit(127)
+    if COMMAND == 'download': sys.exit()
 
 ##############################################################################
 
@@ -159,6 +173,10 @@ outputPgmpath = os.path.join(
     inputFilepath, 
     "%s.%s.%02d.pgm" % (timestamp, bandName, bandNumber))
 
+outputPpmpath = os.path.join(
+    inputFilepath, 
+    "%s.%s.%02d.ppm" % (timestamp, bandName, bandNumber))
+
 decompressData = os.path.join(
     inputFilepath,
     "%s.%s.%02d.fld.geoss" % (timestamp, bandName, bandNumber))
@@ -166,6 +184,10 @@ decompressData = os.path.join(
 convtableFile = os.path.join(
     inputFilepath,
     "%s.%s.%02d.conv" % (timestamp, bandName, bandNumber))
+
+colortableFile = os.path.join(
+    inputFilepath,
+    "%s.%s.%02d.color" % (timestamp, bandName, bandNumber))
 
 ##############################################################################
 
@@ -191,9 +213,13 @@ ctable = getCalibrationTable(bandName, bandNumber)
 # Get conversion table (physical value->greyscale)
 
 print "Generating conversion table"
-cfunc = getConversionFunction(bandName, bandNumber)
+converter = getConverter(bandName, bandNumber)()
+cfunc = converter.physicToGreyscale
 ctable = [chr(cfunc(i)) for i in ctable]
 assert len(ctable) == 65536
+
+print "Generating colorscale PPM file"
+pfile = generatePPMColorscale(converter, 'IRWV')
 
 ##############################################################################
 
@@ -210,6 +236,10 @@ pictureSize = {
 
 f1 = open(convtableFile, 'w+')
 f1.write(''.join(ctable))
+f1.close()
+
+f1 = open(colortableFile, 'w+')
+f1.write(pfile)
 f1.close()
 
 print "Writing PGM file header"
@@ -229,5 +259,16 @@ subprocess.call("cat %s %s | ./converter >> %s" % (
     quote(outputPgmpath)
 ), shell=True)
 
+if COLOR:
+    
+    print "Colorify PGM file"
+
+    subprocess.call("pgmtoppm -map %s %s > %s" % (
+        quote(colortableFile),
+        quote(outputPgmpath),
+        quote(outputPpmpath)
+    ), shell=True)
+
 print "Delete intermediate files"
 os.unlink(convtableFile)
+os.unlink(colortableFile)

@@ -15,3 +15,7 @@ sendcache
 config
 .directory
 temp/*
+*.geoss
+*.geoss.bz2
+*.ppm
+*.pgm

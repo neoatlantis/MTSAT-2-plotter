@@ -218,8 +218,13 @@ cfunc = converter.physicToGreyscale
 ctable = [chr(cfunc(i)) for i in ctable]
 assert len(ctable) == 65536
 
-print "Generating colorscale PPM file"
-pfile = generatePPMColorscale(converter, 'IRWV')
+if COLOR:
+    print "Generating colorscale PPM file"
+    try:
+        pfile = generatePPMColorscale(converter, COLOR)
+    except:
+        print "Unable to color this data using %s as colorscale." % COLOR
+        sys.exit(5)
 
 ##############################################################################
 
@@ -238,9 +243,10 @@ f1 = open(convtableFile, 'w+')
 f1.write(''.join(ctable))
 f1.close()
 
-f1 = open(colortableFile, 'w+')
-f1.write(pfile)
-f1.close()
+if COLOR:
+    f1 = open(colortableFile, 'w+')
+    f1.write(pfile)
+    f1.close()
 
 print "Writing PGM file header"
 
@@ -260,9 +266,7 @@ subprocess.call("cat %s %s | ./converter >> %s" % (
 ), shell=True)
 
 if COLOR:
-    
     print "Colorify PGM file"
-
     subprocess.call("pgmtoppm -map %s %s > %s" % (
         quote(colortableFile),
         quote(outputPgmpath),

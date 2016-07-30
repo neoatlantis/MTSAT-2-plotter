@@ -115,10 +115,10 @@ CHANNELNAME, CHANNELID = '', -1
 if args.channel:
     CHANNELNAME = args.channel[:3].upper()
     CHANNELID = int(args.channel[3:] or -1)
-    if COMMAND == 'download' and CHANNELID == -1:
+    if COMMAND in ['download', 'cook'] and CHANNELID == -1:
         print "You must specify the full channel representation, e.g. XXXYY"
         sys.exit(1)
-elif COMMAND in ['download', 'list']:
+elif COMMAND in ['download', 'cook', 'list']:
     print "You must specify the channel. Use --channel argument."
     sys.exit(1)
 
@@ -222,7 +222,8 @@ if COLOR:
     print "Generating colorscale PPM file"
     try:
         pfile = generatePPMColorscale(converter, COLOR)
-    except:
+    except Exception,e:
+        print e
         print "Unable to color this data using %s as colorscale." % COLOR
         sys.exit(5)
 
@@ -275,4 +276,4 @@ if COLOR:
 
 print "Delete intermediate files"
 os.unlink(convtableFile)
-os.unlink(colortableFile)
+if COLOR: os.unlink(colortableFile)

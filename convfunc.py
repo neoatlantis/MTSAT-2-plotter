@@ -1,16 +1,16 @@
 class TbbConverter:
     value = 'Tbb'
     minTbb = -90.0
-    maxTbb = +30.0
+    maxTbb = +90.0
     def physicToGreyscale(self, Tbb):
         Tbb = Tbb - 273.15
         if Tbb < self.minTbb: Tbb = self.minTbb
         if Tbb > self.maxTbb: Tbb = self.maxTbb
-        return int(round((Tbb - self.minTbb) * 2.125))# 2.125 = 255 / [30 - (-90)]
+        return int(round((Tbb - self.minTbb) * 1.416)) # 1.416 = 255 / (90-(-90))
     def greyscaleToPhysic(self, g):
         if g < 0: g = 0
         if g > 255: g = 255
-        return g / 2.125 + self.minTbb + 273.15
+        return g / 1.416 + self.minTbb + 273.15
 
 class AlbedoConverter:
     value = 'albedo'

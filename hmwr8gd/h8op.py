@@ -151,6 +151,12 @@ if COMMAND in ['download', 'cook']:
 
 ##############################################################################
 
+# Determine converter path
+
+scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
+converterPath = os.path.join(scriptPath, "converter")
+converterCPath = converterPath + ".c"
+
 # Determine input and output file paths
 
 inputFilepath = os.path.realpath(os.path.dirname(inputFile))
@@ -258,11 +264,17 @@ f1.write("P5\n# NeoAtlantis\n%d %d\n255\n" %(
 ))
 f1.close()
 
+print "Checking for C converter..."
+if not os.path.isfile(converterCPath):
+    print "No C converter compiled. Compile using GCC first."
+    subprocess.call(["gcc", converterCPath, "-o", converterPath])
+
 print "Conversion and write data to PGM"
 
-subprocess.call("cat %s %s | ./converter >> %s" % (
+subprocess.call("cat %s %s | %s >> %s" % (
     quote(convtableFile), 
     quote(decompressData),
+    quote(converterPath),
     quote(outputPgmpath)
 ), shell=True)
 

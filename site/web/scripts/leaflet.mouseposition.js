@@ -1,4 +1,4 @@
-define(['leaflet'], function(){
+define(['jquery', 'leaflet'], function($){
 //////////////////////////////////////////////////////////////////////////////
 L.Control.MousePosition = L.Control.extend({
   options: {
@@ -17,16 +17,29 @@ L.Control.MousePosition = L.Control.extend({
     L.DomEvent.disableClickPropagation(this._container);
     map.on('mousemove', this._onMouseMove, this);
     this._container.innerHTML=this.options.emptyString;
+    $(this._container).click(this._onClick);
     return this._container;
   },
 
   onRemove: function (map) {
-    map.off('mousemove', this._onMouseMove)
+    map.off('mousemove', this._onMouseMove);
+    $(this._container).off('click', this._onClick);
+  },
+
+  _onClick: function(){
+    $(this).data('useFormatter', !Boolean($(this).data('useFormatter')));
   },
 
   _onMouseMove: function (e) {
-    var lng = this.options.lngFormatter ? this.options.lngFormatter(e.latlng.lng) : L.Util.formatNum(e.latlng.lng, this.options.numDigits);
-    var lat = this.options.latFormatter ? this.options.latFormatter(e.latlng.lat) : L.Util.formatNum(e.latlng.lat, this.options.numDigits);
+    var useFormatter = $(this._container).data('useFormatter');
+    var lng = ((this.options.lngFormatter && useFormatter) ? 
+        this.options.lngFormatter(e.latlng.lng) :
+        L.Util.formatNum(e.latlng.lng, this.options.numDigits)
+    );
+    var lat = ((this.options.latFormatter && useFormatter) ? 
+        this.options.latFormatter(e.latlng.lat) :
+        L.Util.formatNum(e.latlng.lat, this.options.numDigits)
+    );
     var value = this.options.lngFirst ? lng + this.options.separator + lat : lat + this.options.separator + lng;
     var prefixAndValue = this.options.prefix + ' ' + value;
 //    prefixAndValue += ': (' + e.containerPoint.x + ',' + e.containerPoint.y + ')'

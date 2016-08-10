@@ -158,7 +158,7 @@ function mapView(divID){
     // add mouse position displayer to map
     
     L.control.mousePosition({
-        prefix: '鼠标位置:',
+        prefix: '鼠标位置(单击切换表示):',
         separator: ' / ',
         emptyString: '在地图上移动鼠标以获取位置',
         lngFormatter: function(x){return floatToDegree(x, 'lng')},

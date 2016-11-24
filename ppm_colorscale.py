@@ -113,11 +113,7 @@ def VIS(albedo):
 ##############################################################################
 
 def generatePPMColorscale(converter, scaleName):
-    if converter.value == 'Tbb':
-        assert scaleName in ['NRL', 'IRBD', 'IRWV'] #, 'CycloneCenter']
-    else:   
-        assert scaleName in ['VIS']
-
+    assert scaleName in converter.possibleColorscales
     mapper = {'NRL': NRL, 'IRBD': IRBD, 'IRWV': IRWV, 'VIS': VIS}
 
     ret = 'P3\n# colorscale\n256 1\n255\n'
@@ -126,3 +122,10 @@ def generatePPMColorscale(converter, scaleName):
         ret += '%d %d %d  ' % (mapper[scaleName](pvalue)) 
 
     return ret
+
+def recommendColorscale(bandName, bandNumber):
+    if bandName == 'vis': return 'VIS'
+    if bandName == 'tir':
+        if bandNumber == 7: return 'IRWV'
+        if bandNumber in [1,2]: return 'IRBD'
+    return 'NRL'

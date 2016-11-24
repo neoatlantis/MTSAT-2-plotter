@@ -9,7 +9,7 @@ from pipes import quote
 
 from calibtable import getCalibrationTable
 from convfunc import getConverter
-from ppm_colorscale import generatePPMColorscale
+from ppm_colorscale import generatePPMColorscale, recommendColorscale
 
 ##############################################################################
 
@@ -88,7 +88,12 @@ parser.add_argument(
 parser.add_argument(
     '--color',
     action='store',
-    required=False
+    required=False,
+    help="""Required when you want to colorify the output file. You may specify
+    `NRL`(Navy Research Laboratory), `IRBD` or `IRWV` for infrared band images,
+    or `VIS` for visual band. If you have got it wrong, the program will
+    print a warning and use a recommended configuration.
+    """
 )
 
 args = parser.parse_args()
@@ -218,8 +223,18 @@ cfunc = converter.physicToGreyscale
 ctable = [chr(cfunc(i)) for i in ctable]
 assert len(ctable) == 65536
 
-print "Generating colorscale PPM file"
-pfile = generatePPMColorscale(converter, 'IRWV')
+if COLOR:
+    print "Generating colorscale PPM file"
+    # check converter to see if specified COLOR argument acceptable
+    colorPossible = (COLOR in converter.possibleColorscales)
+    if not colorPossible:    
+        print "[ERROR] Wrong colorscale for data in band %s%d" %\
+            (bandName, bandNumber)
+        COLOR = recommendColorscale(bandName, bandNumber)
+        print "[ERROR] Use `%s` instead for coloring." % COLOR
+    pfile = generatePPMColorscale(converter, COLOR)
+else:
+    print "No colorscale will be applied."
 
 ##############################################################################
 

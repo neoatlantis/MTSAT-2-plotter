@@ -2,6 +2,7 @@ class TbbConverter:
     value = 'Tbb'
     minTbb = -90.0
     maxTbb = +30.0
+    possibleColorscales = ['NRL', 'IRBD', 'IRWV']
     def physicToGreyscale(self, Tbb):
         Tbb = Tbb - 273.15
         if Tbb < self.minTbb: Tbb = self.minTbb
@@ -16,6 +17,7 @@ class AlbedoConverter:
     value = 'albedo'
     minAlbedo = -2
     maxAlbedo = +120.0
+    possibleColorscales = ['VIS']
     def physicToGreyscale(self, albedo):
         if albedo < self.minAlbedo: albedo = self.minAlbedo
         if albedo > self.maxAlbedo: albedo = self.maxAlbedo

@@ -1,6 +1,10 @@
 import math
 
 def hsvToRgb(h, s, v):
+    h /= 360.0
+    s /= 100.0
+    v /= 100.0
+
     i = round(math.floor(h * 6.0)) % 6
     f = h * 6.0 - i
     p = v * (1 - s)
@@ -17,6 +21,22 @@ def hsvToRgb(h, s, v):
     return (round(r * 255.0), round(g * 255.0), round(b * 255.0))
 
 ##############################################################################
+def FIRE(T):
+    detect = 320.0
+    if T <= 180:
+        h, s, v = 0, 0, 100
+    elif T <= detect:
+        h, s = 0, 0
+        v = 100 - 55.0 * (T - 180) / (detect - 180)
+    elif T <= 360:
+        #60, 100, 100 ===> 0, 100, 100
+        s, v = 100, 100
+        h = 60 - (T - detect) * 60.0 / (360 - detect)
+    else:
+        h, s, v = 0, 100, 100
+
+    return hsvToRgb(h, s, v)
+        
 
 def NRL(T):
     i = T - 273.15
@@ -42,10 +62,6 @@ def NRL(T):
     else:
         h, s, v = 0, 0, 0
 
-    h /= 360.0
-    s /= 100.0
-    v /= 100.0
-
     return hsvToRgb(h, s, v)
 
 def IRBD(T):
@@ -63,9 +79,7 @@ def IRBD(T):
     elif i <= 27: v = 100 + (0 - 100) * (i - 9) / (27 - 9)
     else: v = 0
 
-    v /= 100.0
-
-    return hsvToRgb(h, s, v);
+    return hsvToRgb(h, s, v)
 
 def IRWV(T):
     h, s, v = 0, 0, 100
@@ -99,9 +113,6 @@ def IRWV(T):
         h = 220 + 8 * (i + 10)
         s = 85 + 1.5 * (i + 10)
         v = 85 - 3.5 * (i + 10)
-    h /= 360.0
-    s /= 100.0
-    v /= 100.0
 
     return hsvToRgb(h, s, v)
 
@@ -114,7 +125,10 @@ def VIS(albedo):
 
 def generatePPMColorscale(converter, scaleName):
     assert scaleName in converter.possibleColorscales
-    mapper = {'NRL': NRL, 'IRBD': IRBD, 'IRWV': IRWV, 'VIS': VIS}
+    mapper = {
+        'NRL': NRL, 'IRBD': IRBD, 'IRWV': IRWV, 'FIRE': FIRE,
+        'VIS': VIS,
+    }
 
     ret = 'P3\n# colorscale\n256 1\n255\n'
     for i in xrange(0, 256):

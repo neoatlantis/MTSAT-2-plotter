@@ -120,10 +120,10 @@ CHANNELNAME, CHANNELID = '', -1
 if args.channel:
     CHANNELNAME = args.channel[:3].upper()
     CHANNELID = int(args.channel[3:] or -1)
-    if COMMAND == 'download' and CHANNELID == -1:
+    if COMMAND in ['download', 'cook'] and CHANNELID == -1:
         print "You must specify the full channel representation, e.g. XXXYY"
         sys.exit(1)
-elif COMMAND in ['download', 'list']:
+elif COMMAND in ['download', 'cook', 'list']:
     print "You must specify the channel. Use --channel argument."
     sys.exit(1)
 
@@ -155,6 +155,12 @@ if COMMAND in ['download', 'cook']:
     if COMMAND == 'download': sys.exit()
 
 ##############################################################################
+
+# Determine converter path
+
+scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
+converterPath = os.path.join(scriptPath, "converter")
+converterCPath = converterPath + ".c"
 
 # Determine input and output file paths
 
@@ -253,9 +259,10 @@ f1 = open(convtableFile, 'w+')
 f1.write(''.join(ctable))
 f1.close()
 
-f1 = open(colortableFile, 'w+')
-f1.write(pfile)
-f1.close()
+if COLOR:
+    f1 = open(colortableFile, 'w+')
+    f1.write(pfile)
+    f1.close()
 
 print "Writing PGM file header"
 
@@ -266,18 +273,22 @@ f1.write("P5\n# NeoAtlantis\n%d %d\n255\n" %(
 ))
 f1.close()
 
+print "Checking for C converter..."
+if not os.path.isfile(converterCPath):
+    print "No C converter compiled. Compile using GCC first."
+    subprocess.call(["gcc", converterCPath, "-o", converterPath])
+
 print "Conversion and write data to PGM"
 
-subprocess.call("cat %s %s | ./converter >> %s" % (
+subprocess.call("cat %s %s | %s >> %s" % (
     quote(convtableFile), 
     quote(decompressData),
+    quote(converterPath),
     quote(outputPgmpath)
 ), shell=True)
 
 if COLOR:
-    
     print "Colorify PGM file"
-
     subprocess.call("pgmtoppm -map %s %s > %s" % (
         quote(colortableFile),
         quote(outputPgmpath),
@@ -286,4 +297,4 @@ if COLOR:
 
 print "Delete intermediate files"
 os.unlink(convtableFile)
-os.unlink(colortableFile)
+if COLOR: os.unlink(colortableFile)
